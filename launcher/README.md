@@ -7,11 +7,11 @@ The folder setup is published. The downloader can be tested separately from Unre
 ## Publishing packs
 
 1. Build compatible content for the same GodFall project, UE 5.8 version/build, Win64 platform, and base release. Use classic Pak packaging with IoStore disabled for this first workflow. Include cooked assets and their required dependencies; raw FBX, GLB, or editor `.uasset` files alone are not sufficient.
-2. Upload packs into `GameItems/Models/`, `GameItems/Clothing/`, or `GameItems/Weapons/` on `main`. Subfolders are allowed. Use letters, digits, hyphens, and underscores in names. Each pack must be nonempty and at most 95 MiB; Git LFS pointers and `.utoc`/`.ucas` containers are rejected. Larger release downloads are a future extension.
+2. Upload packs and adjacent same-basename `.pack.json` descriptors into `GameItems/Models/`, `GameItems/Clothing/`, or `GameItems/Weapons/` on `main`. Each descriptor names the cooked catalog described in the [runtime contract](../Plugins/GodFallPackRuntime/README.md). Subfolders are allowed. Use letters, digits, hyphens, and underscores in names. Each pack must be nonempty and at most 95 MiB; Git LFS pointers and `.utoc`/`.ucas` containers are rejected. Larger release downloads are a future extension.
 3. Wait for **Publish GodFall item list** in GitHub Actions to succeed. It regenerates `GameItems/manifest.json` with sizes, SHA-256 hashes, and a pinned source commit. Repository policies must allow that workflow to write the manifest to `main`. If a policy prevents its push, publish the generated manifest through the repository's permitted review process.
 4. Delete a pack from its category folder and wait for that workflow to succeed to remove it from the next synchronized set. Do not edit the generated manifest by hand.
 
-Individual packs are not a complete item-authoring contract yet. GodFall's existing armor catalog, weapon registry, and playable-character definitions must be connected to the downloaded content. Two packs replacing the same existing catalog would conflict, so do not publish catalog-replacement packs as a substitute for that integration.
+The runtime catalog declares character profiles, clothing/weapon definitions and optional authored acquisition rows. Base-game Blueprint integration is still being verified. Two packs replacing the same existing catalog would conflict, so do not publish catalog-replacement packs as a substitute for that integration.
 
 ## Launching a packaged game
 

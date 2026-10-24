@@ -78,13 +78,16 @@ function Assert-Manifest($Manifest) {
     if ($null -eq $Manifest.packs -or $Manifest.packs -isnot [Array] -or $Manifest.packs.Count -gt 256) { throw 'Manifest packs must be an array of at most 256 entries' }
     $ids = @{}
     $paths = @{}
+    $catalogs = @{}
     foreach ($pack in @($Manifest.packs)) {
         if ($pack.id -cnotmatch '^[0-9a-f]{24}$' -or $pack.sha256 -cnotmatch '^[0-9a-f]{64}$') { throw 'Invalid pack ID or SHA-256' }
         if ($pack.path -cnotmatch '^GameItems/(Models|Clothing|Weapons)/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.pak$') { throw 'Invalid pack path' }
+        if ($pack.catalog -cnotmatch '^/Game/GFExternal/(?:[A-Za-z0-9_]+/)*([A-Za-z0-9_]+)\.\1$') { throw 'Invalid external pack catalog path' }
         if (($pack.size -isnot [int] -and $pack.size -isnot [long]) -or $pack.size -le 0 -or $pack.size -gt $script:MaxPackBytes) { throw 'Invalid or oversized pack' }
-        if ($ids.ContainsKey($pack.id) -or $paths.ContainsKey($pack.path)) { throw 'Duplicate pack identity or path' }
+        if ($ids.ContainsKey($pack.id) -or $paths.ContainsKey($pack.path) -or $catalogs.ContainsKey($pack.catalog)) { throw 'Duplicate pack identity, path or catalog' }
         $ids[$pack.id] = $true
         $paths[$pack.path] = $true
+        $catalogs[$pack.catalog] = $true
     }
 }
 

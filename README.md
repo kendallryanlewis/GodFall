@@ -8,4 +8,4 @@ The [Windows startup launcher](launcher/README.md) synchronizes prepared classic
 
 ## Setup status
 
-Repository folders, manifest generation, and the pre-launch downloader are provided. Actual Unreal mounting and playable-item registration still require integration and packaged-game verification. Uploading a mesh-only pack does not automatically make it an equipment item or playable character.
+Repository folders, descriptor/manifest generation, and the pre-launch downloader are provided. The [native runtime module and catalog contract](Plugins/GodFallPackRuntime/README.md) are under integration with GodFall_Clean. Actual Unreal mounting and playable-item registration still require Blueprint integration and packaged-game verification. Uploading a mesh-only pack does not automatically make it an equipment item or playable character.
