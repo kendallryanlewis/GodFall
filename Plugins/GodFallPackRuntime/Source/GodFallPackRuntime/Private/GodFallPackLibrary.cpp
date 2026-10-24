@@ -189,7 +189,12 @@ static UGodFallPackRegistryState* Load(const FString& RecordPath)
 
 static UGodFallPackRegistryState* Get()
 {
-    if (!State) { State = Load(FPaths::ProjectContentDir() / TEXT("Paks/GodFallGitHub/.godfall-github.json")); }
+    if (!State)
+    {
+        State = Load(FPaths::ProjectContentDir() / TEXT("Paks/GodFallGitHub/.godfall-github.json"));
+        UE_LOG(LogGodFallPacks, Display, TEXT("Registry ready: Catalogs=%d Characters=%d Clothing=%d Weapons=%d Issues=%d SavedDir=%s"),
+            State->Catalogs.Num(), State->Characters.Num(), State->Clothing.Num(), State->Weapons.Num(), State->Issues.Num(), *FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir()));
+    }
     return State;
 }
 }
