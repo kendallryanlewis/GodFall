@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "project": "GodFall_Clean",
+  "engine": "5.8",
+  "platform": "Win64",
+  "source_commit": "7f023f23195d1b9913782f8ddc45b779f0e5c6d5",
+  "packs": []
+}

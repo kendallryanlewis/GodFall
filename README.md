@@ -4,8 +4,8 @@ Content source for GodFall models, clothing, and weapons.
 
 Item folders are under [`GameItems`](GameItems/README.md).
 
+The [Windows startup launcher](launcher/README.md) synchronizes prepared classic `.pak` files before starting a packaged game. GitHub Actions publishes the exact pack list whenever category-folder content changes.
+
 ## Setup status
 
-The folder structure is ready. GodFall's startup download and item-loading integration has not been implemented or verified yet. Uploading a file here does not currently make it available in the game.
-
-The accepted file formats, item definitions, and compatibility requirements will be documented when the loading workflow is selected and implemented.
+Repository folders, manifest generation, and the pre-launch downloader are provided. Actual Unreal mounting and playable-item registration still require integration and packaged-game verification. Uploading a mesh-only pack does not automatically make it an equipment item or playable character.
