@@ -17,11 +17,15 @@ The catalog is a cooked `GodFallPackDefinition` DataAsset. Its `PackId` must be 
 - `WeaponDefinitions`: classes derived from `BP_GF_WeaponDefinition`, with unique `GFEXT_` DefinitionIds and WeaponClassIds, a compatible combat profile, mesh, socket and grip transform. Existing weapon-instance creation owns rolls and identity.
 - `ItemTables`: optional authored acquisition-table extensions. Each binding names an existing `TargetTable` under `/Game/SYN/Content/InventorySystem/DataTables/` and an `AdditionalRows` DataTable under `/Game/GFExternal/` with the exact same row struct. Every new row name must start with `GFEXT_` and be unique across packs. Author the existing S_Item prices, recipes, ingredients and equipment fields; definitions alone do not invent recipes or prices. No items are granted on startup.
 
+For a weapon acquisition row, use the weapon's `DefinitionId` as its row name, existing weapon category/equipment metadata, and `BaseInfo.MaxStackSize=1`. Weapon DefinitionIds must be unique. The inventory bridge calls the existing permanent weapon-instance factory once per stored slot, retaining the complete authored item template and generating its identity/rolls there. Table lookup alone does not create a rolled weapon. Invalid stack sizes leave the base table in use. The Blueprint bridge is saved and compiled; actual stored output still requires its focused runtime check.
+
 Runtime queries use transient catalog/table copies. Base rows cannot be shadowed. Composite item-table queries include extensions targeting their constituent tables. Generic weapon pickups may include external definitions; specialized pickup subclasses keep their configured pools.
 
 ## Base game integration status
 
-The plugin is a support module; the base GodFall build needs matching Blueprint routes and a rebuild. In the live project, GameInstance startup/profile/Continue routes and the armor catalog's pure combined-definition queries are saved and have passed direct checks. The conditional character-entry wiring, weapon pickup participation, item-table acquisition routes and packaged-game checks remain under integration.
+The plugin is a support module; the base GodFall build needs matching Blueprint routes and a rebuild. In the live project, the GameInstance startup/profile/Continue routes, armor catalog's combined-definition queries, and conditional character-entry wiring are saved, compiled and mapped. Editor fixtures passed additional-character selection, gameplay profile resolution, fresh Continue, unavailable-character rejection, clothing eligibility, Back/focus, and adjacent base preview checks. Fixtures reuse existing art and do not prove cooked-pack mounting.
+
+Item-table routes in the shared lookup, inventory, transaction manager, crafting list and shop list are saved and compiled. Base/no-pack checks pass. The external-weapon storage bridge, transaction costs, pickup participation, equipment persistence and packaged add/remove still need their remaining runtime checks. No startup inventory grants are added.
 
 `InstallExternalCharacterEntry` is intended for the existing selection widget's Event Construct. It adds one runtime button to `GF_RealmDesign` only when external characters exist and owns its click delegate. The designer hierarchy and existing carousel bindings remain authored by the base game.
 

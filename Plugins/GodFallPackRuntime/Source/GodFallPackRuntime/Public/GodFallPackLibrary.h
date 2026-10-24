@@ -88,11 +88,15 @@ public:
     static UDataTable* GetRuntimeItemTable(UDataTable* AuthoredTable);
 
     /** Only the generic pickup pool is extended; specialized variant pools retain their policy. */
-    UFUNCTION(BlueprintCallable, Category="GodFall|Packs")
+    UFUNCTION(BlueprintCallable, Category="GodFall|Packs", meta=(DefaultToSelf="Pickup"))
     static bool ExtendGenericWeaponPickupPool(UObject* Pickup);
 
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static TArray<UClass*> GetExternalWeaponDefinitions();
+
+    /** Acquisition row names match authored weapon DefinitionIds; returned policy stays immutable. */
+    UFUNCTION(BlueprintPure, Category="GodFall|Packs", meta=(DeterminesOutputType="DefinitionClass"))
+    static UObject* FindExternalWeaponForItemId(FName ItemId, TSubclassOf<UObject> DefinitionClass = nullptr);
 
     /** Populate only a newly constructed runtime registry's six metadata maps. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs")

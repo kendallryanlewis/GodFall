@@ -6,6 +6,7 @@
 #include "Engine/GameInstance.h"
 #include "Engine/CompositeDataTable.h"
 #include "Blueprint/WidgetTree.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/TextBlock.h"
@@ -93,7 +94,7 @@ static UGodFallPackRegistryState* Load(const FString& RecordPath)
     UClass* WeaponSchema = LoadClass<UObject>(nullptr, TEXT("/Game/GF/Weapons/Data/BP_GF_WeaponDefinition.BP_GF_WeaponDefinition_C"));
     if (!CharacterSchema || !ClothingSchema || !WeaponSchema)
     { Issue(Result, TEXT("The base GodFall definition schemas are missing.")); return Result; }
-    TSet<FName> PackIds, CharacterIds, ClothingIds, WeaponIds, ItemRowIds;
+    TSet<FName> PackIds, CharacterIds, ClothingIds, WeaponIds, WeaponDefinitionIds, ItemRowIds;
     for (const TSharedPtr<FJsonValue>& Value : *Packs)
     {
         const TSharedPtr<FJsonObject>* Pack = nullptr;
@@ -116,7 +117,7 @@ static UGodFallPackRegistryState* Load(const FString& RecordPath)
         TArray<UClass*> Weapons;
         TArray<FGodFallPackItemTable> ItemTables;
         TSet<FName> LocalRows;
-        TSet<FName> LocalCharacters, LocalClothing, LocalWeapons;
+        TSet<FName> LocalCharacters, LocalClothing, LocalWeapons, LocalWeaponDefinitions;
         bool Valid = true;
         for (const TSoftObjectPtr<UObject>& Ref : Catalog->CharacterProfiles)
         {
@@ -143,12 +144,13 @@ static UGodFallPackRegistryState* Load(const FString& RecordPath)
             UClass* Class = Ref.LoadSynchronous();
             UObject* Definition = Class ? Class->GetDefaultObject() : nullptr;
             const FName ClassId = ReadName(Definition, TEXT("WeaponClassId"));
+            const FName DefinitionId = ReadName(Definition, TEXT("DefinitionId"));
             if (!ExternalAsset(Class) || !Class->IsChildOf(WeaponSchema) || !ExternalId(ClassId) ||
-                !ExternalId(ReadName(Definition, TEXT("DefinitionId"))) ||
+                !ExternalId(DefinitionId) || WeaponDefinitionIds.Contains(DefinitionId) || LocalWeaponDefinitions.Contains(DefinitionId) ||
                 WeaponIds.Contains(ClassId) || LocalWeapons.Contains(ClassId) ||
                 !ReadObject(Definition, TEXT("CombatStyleProfile")) || !ReadObject(Definition, TEXT("PresentationStaticMesh")))
             { Valid = false; break; }
-            LocalWeapons.Add(ClassId); Weapons.Add(Class);
+            LocalWeapons.Add(ClassId); LocalWeaponDefinitions.Add(DefinitionId); Weapons.Add(Class);
         }
         for (const FGodFallPackItemTable& Binding : Catalog->ItemTables)
         {
@@ -173,6 +175,7 @@ static UGodFallPackRegistryState* Load(const FString& RecordPath)
         for (UObject* Definition : Clothing) { Result->Clothing.Add(Definition); ClothingIds.Add(ReadName(Definition, TEXT("DefinitionId"))); }
         for (UClass* Class : Weapons) { Result->Weapons.Add(Class); WeaponIds.Add(ReadName(Class->GetDefaultObject(), TEXT("WeaponClassId"))); }
         Result->Catalogs.Add(Catalog);
+        WeaponDefinitionIds.Append(LocalWeaponDefinitions);
         Result->ItemTables.Append(ItemTables);
         for (const FGodFallPackItemTable& Binding : ItemTables)
         {
@@ -267,7 +270,32 @@ UDataTable* UGodFallPackLibrary::GetRuntimeItemTable(UDataTable* AuthoredTable)
     TSet<FName> Names;
     for (const auto& Row : AuthoredTable->GetRowMap()) { Names.Add(Row.Key); }
     for (const UDataTable* Source : Sources)
-    { for (const auto& Row : Source->GetRowMap()) { if (Names.Contains(Row.Key)) { return AuthoredTable; } Names.Add(Row.Key); } }
+    {
+        for (const auto& Row : Source->GetRowMap())
+        {
+            if (Names.Contains(Row.Key)) { return AuthoredTable; }
+            if (FindExternalWeaponForItemId(Row.Key))
+            {
+                const UStruct* ItemInfoStruct = Source->GetRowStruct();
+                const void* ItemInfoData = Row.Value;
+                for (TFieldIterator<FStructProperty> Property(Source->GetRowStruct()); Property; ++Property)
+                {
+                    if (Property->GetName().StartsWith(TEXT("BaseInfo")))
+                    { ItemInfoStruct = Property->Struct; ItemInfoData = Property->ContainerPtrToValuePtr<void>(Row.Value); break; }
+                }
+                const FIntProperty* StackSize = nullptr;
+                for (TFieldIterator<FIntProperty> Property(ItemInfoStruct); Property; ++Property)
+                { if (Property->GetName().StartsWith(TEXT("MaxStackSize"))) { StackSize = *Property; break; } }
+                if (!StackSize || StackSize->GetPropertyValue_InContainer(ItemInfoData) != 1)
+                {
+                    GodFallPacks::Issue(Registry, FString::Printf(TEXT("Weapon acquisition row %s must have MaxStackSize=1; table extension skipped."), *Row.Key.ToString()));
+                    Registry->RuntimeCopies.Add(AuthoredTable, AuthoredTable);
+                    return AuthoredTable;
+                }
+            }
+            Names.Add(Row.Key);
+        }
+    }
     UDataTable* Copy = NewObject<UDataTable>(Registry, NAME_None, RF_Transient);
     Copy->RowStruct = AuthoredTable->RowStruct;
     for (const auto& Row : AuthoredTable->GetRowMap()) { Copy->AddRow(Row.Key, Row.Value, Copy->GetRowStruct()); }
@@ -300,6 +328,17 @@ TArray<UClass*> UGodFallPackLibrary::GetExternalWeaponDefinitions()
     TArray<UClass*> Result;
     for (UClass* Class : GodFallPacks::Get()->Weapons) { Result.Add(Class); }
     return Result;
+}
+
+UObject* UGodFallPackLibrary::FindExternalWeaponForItemId(FName ItemId, TSubclassOf<UObject> DefinitionClass)
+{
+    for (UClass* Class : GodFallPacks::Get()->Weapons)
+    {
+        UObject* Definition = Class->GetDefaultObject();
+        if (GodFallPacks::ReadName(Definition, TEXT("DefinitionId")) == ItemId && (!DefinitionClass || Definition->IsA(DefinitionClass)))
+        { return Definition; }
+    }
+    return nullptr;
 }
 
 bool UGodFallPackLibrary::RegisterExternalWeaponMetadata(UObject* RuntimeRegistry, FString& Error)
@@ -405,6 +444,8 @@ bool UGodFallPackLibrary::InstallExternalCharacterEntry(UUserWidget* SelectionWi
     Label->SetFont(Font); Label->SetJustification(ETextJustify::Center); Button->AddChild(Label);
     UCanvasPanelSlot* Slot = Panel->AddChildToCanvas(Button);
     Slot->SetPosition(FVector2D(1228, 900)); Slot->SetSize(FVector2D(372, 36));
+    const UCanvasPanelSlot* SourceSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Source);
+    Slot->SetZOrder(SourceSlot ? SourceSlot->GetZOrder() : 6);
     return true;
 }
 
@@ -434,6 +475,11 @@ bool UGodFallPackLibrary::ReloadEditorFixture(const FString& OwnershipRecord, co
 class FGodFallPackRuntimeModule : public IModuleInterface
 {
 public:
-    virtual void ShutdownModule() override { GodFallPacks::Reset(); }
+    virtual void ShutdownModule() override
+    {
+        // Engine shutdown destroys UObjects before unloading runtime modules.
+        if (!IsEngineExitRequested()) { GodFallPacks::Reset(); }
+        else { GodFallPacks::State = nullptr; }
+    }
 };
 IMPLEMENT_MODULE(FGodFallPackRuntimeModule, GodFallPackRuntime)
