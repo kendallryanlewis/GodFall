@@ -5,6 +5,17 @@
 #include "Components/Button.h"
 #include "GodFallPackCharacterPicker.generated.h"
 
+UCLASS()
+class GODFALLPACKRUNTIME_API UGodFallPackEntryButton : public UButton
+{
+    GENERATED_BODY()
+public:
+    void Configure(UUserWidget* InSelection);
+private:
+    UPROPERTY(Transient) TObjectPtr<UUserWidget> Selection;
+    UFUNCTION() void OpenPicker();
+};
+
 class UTextBlock;
 class UGodFallPackCharacterPicker;
 

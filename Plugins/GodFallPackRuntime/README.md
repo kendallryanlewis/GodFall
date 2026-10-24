@@ -19,6 +19,12 @@ The catalog is a cooked `GodFallPackDefinition` DataAsset. Its `PackId` must be 
 
 Runtime queries use transient catalog/table copies. Base rows cannot be shadowed. Composite item-table queries include extensions targeting their constituent tables. Generic weapon pickups may include external definitions; specialized pickup subclasses keep their configured pools.
 
+## Base game integration status
+
+The plugin is a support module; the base GodFall build needs matching Blueprint routes and a rebuild. In the live project, GameInstance startup/profile/Continue routes and the armor catalog's pure combined-definition queries are saved and have passed direct checks. The conditional character-entry wiring, weapon pickup participation, item-table acquisition routes and packaged-game checks remain under integration.
+
+`InstallExternalCharacterEntry` is intended for the existing selection widget's Event Construct. It adds one runtime button to `GF_RealmDesign` only when external characters exist and owns its click delegate. The designer hierarchy and existing carousel bindings remain authored by the base game.
+
 The registry reads the launcher's owned `.godfall-github.json` after startup pack discovery. Invalid or conflicting catalogs are rejected as a unit. A fresh process builds its registry only from the installed set. Missing imported character IDs fail the continuation availability gate. Save files are retained; full equipped-item removal behavior still requires verification.
 
 ## Packaging

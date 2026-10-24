@@ -5,6 +5,10 @@
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/CompositeDataTable.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/CanvasPanel.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/TextBlock.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
@@ -170,6 +174,11 @@ static UGodFallPackRegistryState* Load(const FString& RecordPath)
         for (UClass* Class : Weapons) { Result->Weapons.Add(Class); WeaponIds.Add(ReadName(Class->GetDefaultObject(), TEXT("WeaponClassId"))); }
         Result->Catalogs.Add(Catalog);
         Result->ItemTables.Append(ItemTables);
+        for (const FGodFallPackItemTable& Binding : ItemTables)
+        {
+            Result->AcquisitionTables.AddUnique(Binding.TargetTable.Get());
+            Result->AcquisitionTables.AddUnique(Binding.AdditionalRows.Get());
+        }
         ItemRowIds.Append(LocalRows);
     }
     return Result;
@@ -375,6 +384,28 @@ UUserWidget* UGodFallPackLibrary::OpenExternalCharacterPicker(UUserWidget* Selec
     Controller->SetInputMode(Input);
     Controller->SetShowMouseCursor(true);
     return Picker;
+}
+
+bool UGodFallPackLibrary::InstallExternalCharacterEntry(UUserWidget* SelectionWidget)
+{
+    if (!SelectionWidget || !SelectionWidget->WidgetTree || GetExternalCharacterProfiles().IsEmpty()) { return false; }
+    UWidgetTree* Tree = SelectionWidget->WidgetTree;
+    if (Tree->FindWidget(TEXT("GF_PackCharacters"))) { return true; }
+    UCanvasPanel* Panel = Cast<UCanvasPanel>(Tree->FindWidget(TEXT("GF_RealmDesign")));
+    UButton* Source = Cast<UButton>(Tree->FindWidget(TEXT("GF_Back")));
+    if (!Panel || !Source) { return false; }
+    UGodFallPackEntryButton* Button = Tree->ConstructWidget<UGodFallPackEntryButton>(UGodFallPackEntryButton::StaticClass(), TEXT("GF_PackCharacters"));
+    Button->SetStyle(Source->GetStyle()); Button->Configure(SelectionWidget);
+    UTextBlock* Label = Tree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("GF_PackCharactersLabel"));
+    Label->SetText(NSLOCTEXT("GodFallPacks", "Entry", "ADDITIONAL CHARACTERS"));
+    FSlateFontInfo Font = Label->GetFont(); Font.Size = 16;
+    if (const UTextBlock* SourceLabel = Cast<UTextBlock>(Source->GetChildAt(0)))
+    { Font = SourceLabel->GetFont(); Font.Size = 16; Label->SetColorAndOpacity(SourceLabel->GetColorAndOpacity()); }
+    else { Label->SetColorAndOpacity(FSlateColor(FLinearColor(0.92f, 0.75f, 0.4f))); }
+    Label->SetFont(Font); Label->SetJustification(ETextJustify::Center); Button->AddChild(Label);
+    UCanvasPanelSlot* Slot = Panel->AddChildToCanvas(Button);
+    Slot->SetPosition(FVector2D(1228, 900)); Slot->SetSize(FVector2D(372, 36));
+    return true;
 }
 
 bool UGodFallPackLibrary::ReloadEditorFixture(const FString& OwnershipRecord, const FString& PrivateSaveSlot, FString& Error)

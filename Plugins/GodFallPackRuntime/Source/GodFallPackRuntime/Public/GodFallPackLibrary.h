@@ -51,6 +51,7 @@ public:
     UPROPERTY(Transient) TArray<TObjectPtr<UObject>> Clothing;
     UPROPERTY(Transient) TArray<TObjectPtr<UClass>> Weapons;
     UPROPERTY(Transient) TArray<FGodFallPackItemTable> ItemTables;
+    UPROPERTY(Transient) TArray<TObjectPtr<UDataTable>> AcquisitionTables;
     UPROPERTY(Transient) TMap<TObjectPtr<UObject>, TObjectPtr<UObject>> RuntimeCopies;
     FString Source;
     TArray<FString> Issues;
@@ -103,6 +104,10 @@ public:
     /** Additive picker: it leaves the base carousel and its camera actors unchanged. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs")
     static UUserWidget* OpenExternalCharacterPicker(UUserWidget* SelectionWidget, UButton* SourceButton);
+
+    /** Builds one conditional runtime entry in the selection screen's existing canvas. */
+    UFUNCTION(BlueprintCallable, Category="GodFall|Packs", meta=(DefaultToSelf="SelectionWidget"))
+    static bool InstallExternalCharacterEntry(UUserWidget* SelectionWidget);
 
     /** Editor-only fixture admission; refuses PIE and always refuses a packaged game. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs|Testing", meta=(DevelopmentOnly))

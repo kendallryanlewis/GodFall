@@ -34,6 +34,14 @@ FText ProfileLabel(const UObject* Profile)
 }
 }
 
+void UGodFallPackEntryButton::Configure(UUserWidget* InSelection)
+{
+    Selection = InSelection;
+    OnClicked.AddUniqueDynamic(this, &ThisClass::OpenPicker);
+}
+void UGodFallPackEntryButton::OpenPicker()
+{ UGodFallPackLibrary::OpenExternalCharacterPicker(Selection, this); }
+
 void UGodFallPackCharacterChoice::ConfigureChoice(UObject* InProfile, UGodFallPackCharacterPicker* InPicker)
 {
     Profile = InProfile; Picker = InPicker;
