@@ -2,20 +2,22 @@
 
 This first version is a **Windows launcher**, not an in-game downloader. It synchronizes classic cooked `.pak` files before starting a packaged GodFall build. Launch through this script whenever you want an update check; starting the executable directly skips the check.
 
-The folder setup is published. The downloader can be tested separately from Unreal. **Playable-item registration, actual Unreal pack mounting, and saved-item recovery still require integration and a packaged-game test.** Do not treat a successful sync as proof that a new mesh is playable.
+The folders and downloader are published. Private editor fixtures passed new-character selection/restoration, clothing loot/equipment, permanent weapon acquisition, existing transaction/capacity rules and equipped-weapon save restoration. **Actual cooked-pack add/remove verification in the rebuilt Windows game is in progress.** A successful download alone does not establish playable registration.
 
 ## Publishing packs
 
 1. Build compatible content for the same GodFall project, UE 5.8 version/build, Win64 platform, and base release. Use classic Pak packaging with IoStore disabled for this first workflow. Include cooked assets and their required dependencies; raw FBX, GLB, or editor `.uasset` files alone are not sufficient.
 2. Upload packs and adjacent same-basename `.pack.json` descriptors into `GameItems/Models/`, `GameItems/Clothing/`, or `GameItems/Weapons/` on `main`. Each descriptor names the cooked catalog described in the [runtime contract](../Plugins/GodFallPackRuntime/README.md). Subfolders are allowed. Use letters, digits, hyphens, and underscores in names. Each pack must be nonempty and at most 95 MiB; Git LFS pointers and `.utoc`/`.ucas` containers are rejected. Larger release downloads are a future extension.
 3. Wait for **Publish GodFall item list** in GitHub Actions to succeed. It regenerates `GameItems/manifest.json` with sizes, SHA-256 hashes, and a pinned source commit. Repository policies must allow that workflow to write the manifest to `main`. If a policy prevents its push, publish the generated manifest through the repository's permitted review process.
-4. Delete a pack from its category folder and wait for that workflow to succeed to remove it from the next synchronized set. Do not edit the generated manifest by hand.
+4. Delete a pack and its descriptor from the category folder, then wait for that workflow to succeed to remove it from the next synchronized set. Do not edit the generated manifest by hand.
 
-The runtime catalog declares character profiles, clothing/weapon definitions and optional authored acquisition rows. Base-game Blueprint integration is still being verified. Two packs replacing the same existing catalog would conflict, so do not publish catalog-replacement packs as a substitute for that integration.
+The runtime catalog declares character profiles, clothing/weapon definitions and optional authored acquisition rows. Matching base-game Blueprint routes are saved and passed focused private PIE checks. Packs must provide their own namespaced definitions and catalogs while retaining existing base assets.
 
 ## Launching a packaged game
 
 Keep this launcher outside its managed cache. The example paths below are placeholders; use your actual packaged build, **not the live Unreal project**.
+
+For the standard Windows build layout, copy both `Play-GodFall.cmd` and `Start-GodFall.ps1` beside the top-level `GodFall_Clean.exe`, then open `Play-GodFall.cmd`. It uses the adjacent `GodFall_Clean` game folder and checks GitHub before launching. Use the PowerShell command below for a custom install path.
 
 ```powershell
 powershell.exe -NoProfile -File .\Start-GodFall.ps1 `
@@ -37,6 +39,6 @@ The game must be closed. The launcher needs write access to the packaged build's
 
 Packs use deterministic `_P.pak` names so they participate in Unreal's patch ordering. Authoring and testing must ensure they contain only the intended content and do not accidentally override unrelated base-game packages.
 
-## Remaining game integration
+## Verification status
 
-The next milestone must connect downloaded definition assets to the actual armor, weapon, and character authorities, exercise an added and removed compatible item in a packaged build, verify missing equipped-item recovery, and check protected inventory, equipment, input, animation, and save persistence. No production Blueprint or project asset has been changed by this repository setup.
+The live GodFall_Clean project contains the matching registry, selection, clothing-query and acquisition routes. The base game needs a rebuild once; later compatible content updates use the launcher. Editor fixture checks are recorded separately from real cooked-pack mounting. A rebuilt classic-Pak Windows game and its actual add/remove check are in progress. Existing saved-item recovery remains authoritative, and source assets and production saves are preserved.
