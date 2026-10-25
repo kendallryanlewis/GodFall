@@ -3,6 +3,21 @@
   "project": "GodFall_Clean",
   "engine": "5.8",
   "platform": "Win64",
-  "source_commit": "b792d5caaec3d5e17ea56da078d36c3190754adc",
-  "packs": []
+  "source_commit": "9c770c50449610e90bf1799b773856d077153d0a",
+  "packs": [
+    {
+      "id": "1af0abebeb30304a8b4b5138",
+      "path": "GameItems/Armor/LocalArmor.pak",
+      "size": 106593,
+      "sha256": "244e348146682503645193424503bf166cb2919528b8ad83bb11a6f0d1bfeed7",
+      "catalog": "/Game/GFExternal/LocalEquipment/Armor/DA_GFEXT_LocalArmor.DA_GFEXT_LocalArmor"
+    },
+    {
+      "id": "d9448be95c9637702958a363",
+      "path": "GameItems/Weapons/LocalWeapons.pak",
+      "size": 5676,
+      "sha256": "9191e5262b9a05657d8ac2e2abe269d44066457362e3d05b7ec9599ec6c98d1a",
+      "catalog": "/Game/GFExternal/LocalEquipment/Weapons/DA_GFEXT_LocalWeapons.DA_GFEXT_LocalWeapons"
+    }
+  ]
 }
