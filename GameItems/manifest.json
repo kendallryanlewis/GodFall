@@ -3,7 +3,7 @@
   "project": "GodFall_Clean",
   "engine": "5.8",
   "platform": "Win64",
-  "source_commit": "9c770c50449610e90bf1799b773856d077153d0a",
+  "source_commit": "2da7cce9b160681a661638015b29bce58835fcb0",
   "packs": [
     {
       "id": "1af0abebeb30304a8b4b5138",
