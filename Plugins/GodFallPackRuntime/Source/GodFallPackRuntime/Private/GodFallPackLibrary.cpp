@@ -1,7 +1,6 @@
 #include "GodFallPackLibrary.h"
 #include "GodFallPackCharacterPicker.h"
 
-#include "Dom/JsonObject.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/CompositeDataTable.h"
@@ -11,12 +10,8 @@
 #include "Components/CanvasPanelSlot.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/PlayerController.h"
-#include "HAL/FileManager.h"
-#include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Modules/ModuleManager.h"
-#include "Serialization/JsonReader.h"
-#include "Serialization/JsonSerializer.h"
 #include "UObject/UnrealType.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogGodFallPacks, Log, All);
@@ -27,7 +22,6 @@ static UGodFallPackRegistryState* State = nullptr;
 #if WITH_EDITOR
 static FString PrivateEditorSaveSlot;
 #endif
-static const FString Prefix = TEXT("/Game/GFExternal/");
 
 static FName ReadName(const UObject* Object, const TCHAR* Name)
 {
@@ -46,11 +40,6 @@ static bool ExternalId(FName Id)
     return !Id.IsNone() && Id.ToString().StartsWith(TEXT("GFEXT_"), ESearchCase::CaseSensitive);
 }
 
-static bool ExternalAsset(const UObject* Object)
-{
-    return Object && Object->GetPathName().StartsWith(Prefix, ESearchCase::CaseSensitive);
-}
-
 static void Issue(UGodFallPackRegistryState* Target, const FString& Message)
 {
     Target->Issues.Add(Message);
@@ -62,141 +51,16 @@ static void Reset()
     if (State) { State->RemoveFromRoot(); State = nullptr; }
 }
 
-static UGodFallPackRegistryState* Load(const FString& RecordPath)
-{
-    UGodFallPackRegistryState* Result = NewObject<UGodFallPackRegistryState>();
-    Result->AddToRoot();
-    Result->Source = RecordPath;
-    if (!FPaths::FileExists(RecordPath)) { return Result; }
-    FString Text;
-    TSharedPtr<FJsonObject> Record;
-    if (!FFileHelper::LoadFileToString(Text, *RecordPath) ||
-        !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Record) || !Record.IsValid())
-    { Issue(Result, TEXT("Pack ownership record is unreadable; base content remains available.")); return Result; }
-    FString Owner;
-    const TSharedPtr<FJsonObject>* ManifestPtr = nullptr;
-    if (!Record->TryGetStringField(TEXT("owner"), Owner) || Owner != TEXT("GodFallGitHubPacks-v1") ||
-        !Record->TryGetObjectField(TEXT("manifest"), ManifestPtr))
-    { Issue(Result, TEXT("Pack ownership or manifest is invalid.")); return Result; }
-    const TSharedPtr<FJsonObject>& Manifest = *ManifestPtr;
-    FString Project, Engine, Platform;
-    double Schema = 0;
-    const TArray<TSharedPtr<FJsonValue>>* Packs = nullptr;
-    if (!Manifest->TryGetNumberField(TEXT("schema_version"), Schema) || Schema != 1 ||
-        !Manifest->TryGetStringField(TEXT("project"), Project) || Project != TEXT("GodFall_Clean") ||
-        !Manifest->TryGetStringField(TEXT("engine"), Engine) || Engine != TEXT("5.8") ||
-        !Manifest->TryGetStringField(TEXT("platform"), Platform) || Platform != TEXT("Win64") ||
-        !Manifest->TryGetArrayField(TEXT("packs"), Packs) || Packs->Num() > 256)
-    { Issue(Result, TEXT("Unsupported pack manifest contract.")); return Result; }
-    if (Packs->IsEmpty()) { return Result; }
-    UClass* CharacterSchema = LoadClass<UObject>(nullptr, TEXT("/Game/GF/Characters/Profiles/BP_GF_GodCharacterProfile.BP_GF_GodCharacterProfile_C"));
-    UClass* ClothingSchema = LoadClass<UObject>(nullptr, TEXT("/Game/GF/Items/Armor/Data/BP_GF_ArmorDefinition.BP_GF_ArmorDefinition_C"));
-    UClass* WeaponSchema = LoadClass<UObject>(nullptr, TEXT("/Game/GF/Weapons/Data/BP_GF_WeaponDefinition.BP_GF_WeaponDefinition_C"));
-    if (!CharacterSchema || !ClothingSchema || !WeaponSchema)
-    { Issue(Result, TEXT("The base GodFall definition schemas are missing.")); return Result; }
-    TSet<FName> PackIds, CharacterIds, ClothingIds, WeaponIds, WeaponDefinitionIds, ItemRowIds;
-    for (const TSharedPtr<FJsonValue>& Value : *Packs)
-    {
-        const TSharedPtr<FJsonObject>* Pack = nullptr;
-        FString CatalogPath, Id, Hash;
-        double Size = 0;
-        if (!Value->TryGetObject(Pack) || !(*Pack)->TryGetStringField(TEXT("catalog"), CatalogPath) ||
-            !CatalogPath.StartsWith(Prefix, ESearchCase::CaseSensitive) || CatalogPath.Contains(TEXT("..")) ||
-            !(*Pack)->TryGetStringField(TEXT("id"), Id) || Id.Len() != 24 ||
-            !(*Pack)->TryGetStringField(TEXT("sha256"), Hash) || Hash.Len() != 64 ||
-            !(*Pack)->TryGetNumberField(TEXT("size"), Size) || Size <= 0)
-        { Issue(Result, TEXT("Skipping a pack with invalid entry-point metadata.")); continue; }
-        const FString Filename = Id + TEXT("_") + Hash.Left(16) + TEXT("_P.pak");
-        const FString PakPath = FPaths::GetPath(RecordPath) / Filename;
-        if (IFileManager::Get().FileSize(*PakPath) != static_cast<int64>(Size))
-        { Issue(Result, FString::Printf(TEXT("Pack %s is not installed completely."), *Id)); continue; }
-        UGodFallPackDefinition* Catalog = LoadObject<UGodFallPackDefinition>(nullptr, *CatalogPath);
-        if (!Catalog || Catalog->PackId.IsNone() || PackIds.Contains(Catalog->PackId))
-        { Issue(Result, FString::Printf(TEXT("Pack %s has a missing or duplicate catalog."), *Id)); continue; }
-        TArray<UObject*> Characters, Clothing;
-        TArray<UClass*> Weapons;
-        TArray<FGodFallPackItemTable> ItemTables;
-        TSet<FName> LocalRows;
-        TSet<FName> LocalCharacters, LocalClothing, LocalWeapons, LocalWeaponDefinitions;
-        bool Valid = true;
-        for (const TSoftObjectPtr<UObject>& Ref : Catalog->CharacterProfiles)
-        {
-            UObject* Profile = Ref.LoadSynchronous();
-            const FName CharacterId = ReadName(Profile, TEXT("GodId"));
-            if (!ExternalAsset(Profile) || !Profile->IsA(CharacterSchema) || !ExternalId(CharacterId) ||
-                CharacterIds.Contains(CharacterId) || LocalCharacters.Contains(CharacterId) ||
-                (!ReadObject(Profile, TEXT("PresentationActorClass")) && !ReadObject(Profile, TEXT("BodyMesh"))))
-            { Valid = false; break; }
-            LocalCharacters.Add(CharacterId); Characters.Add(Profile);
-        }
-        for (const TSoftObjectPtr<UObject>& Ref : Catalog->ClothingDefinitions)
-        {
-            UObject* Definition = Ref.LoadSynchronous();
-            const FName DefinitionId = ReadName(Definition, TEXT("DefinitionId"));
-            if (!ExternalAsset(Definition) || !Definition->IsA(ClothingSchema) || !ExternalId(DefinitionId) ||
-                ClothingIds.Contains(DefinitionId) || LocalClothing.Contains(DefinitionId) ||
-                (!ReadObject(Definition, TEXT("PresentationMesh")) && !ReadObject(Definition, TEXT("PresentationStaticMesh"))))
-            { Valid = false; break; }
-            LocalClothing.Add(DefinitionId); Clothing.Add(Definition);
-        }
-        for (const TSoftClassPtr<UObject>& Ref : Catalog->WeaponDefinitions)
-        {
-            UClass* Class = Ref.LoadSynchronous();
-            UObject* Definition = Class ? Class->GetDefaultObject() : nullptr;
-            const FName ClassId = ReadName(Definition, TEXT("WeaponClassId"));
-            const FName DefinitionId = ReadName(Definition, TEXT("DefinitionId"));
-            if (!ExternalAsset(Class) || !Class->IsChildOf(WeaponSchema) || !ExternalId(ClassId) ||
-                !ExternalId(DefinitionId) || WeaponDefinitionIds.Contains(DefinitionId) || LocalWeaponDefinitions.Contains(DefinitionId) ||
-                WeaponIds.Contains(ClassId) || LocalWeapons.Contains(ClassId) ||
-                !ReadObject(Definition, TEXT("CombatStyleProfile")) || !ReadObject(Definition, TEXT("PresentationStaticMesh")))
-            { Valid = false; break; }
-            LocalWeapons.Add(ClassId); LocalWeaponDefinitions.Add(DefinitionId); Weapons.Add(Class);
-        }
-        for (const FGodFallPackItemTable& Binding : Catalog->ItemTables)
-        {
-            UDataTable* Target = Binding.TargetTable.LoadSynchronous();
-            UDataTable* Rows = Binding.AdditionalRows.LoadSynchronous();
-            if (!Target || !Target->GetPathName().StartsWith(TEXT("/Game/SYN/Content/InventorySystem/DataTables/")) ||
-                !ExternalAsset(Rows) || !Target->GetRowStruct() || Target->GetRowStruct() != Rows->GetRowStruct())
-            { Valid = false; break; }
-            for (const auto& Row : Rows->GetRowMap())
-            {
-                if (!ExternalId(Row.Key) || Target->GetRowMap().Contains(Row.Key) || ItemRowIds.Contains(Row.Key) || LocalRows.Contains(Row.Key))
-                { Valid = false; break; }
-                LocalRows.Add(Row.Key);
-            }
-            if (!Valid) { break; }
-            ItemTables.Add(Binding);
-        }
-        if (!Valid)
-        { Issue(Result, FString::Printf(TEXT("Pack %s contains invalid or conflicting definitions; none were registered."), *Id)); continue; }
-        PackIds.Add(Catalog->PackId);
-        for (UObject* Profile : Characters) { Result->Characters.Add(Profile); CharacterIds.Add(ReadName(Profile, TEXT("GodId"))); }
-        for (UObject* Definition : Clothing) { Result->Clothing.Add(Definition); ClothingIds.Add(ReadName(Definition, TEXT("DefinitionId"))); }
-        for (UClass* Class : Weapons) { Result->Weapons.Add(Class); WeaponIds.Add(ReadName(Class->GetDefaultObject(), TEXT("WeaponClassId"))); }
-        Result->Catalogs.Add(Catalog);
-        WeaponDefinitionIds.Append(LocalWeaponDefinitions);
-        Result->ItemTables.Append(ItemTables);
-        for (const FGodFallPackItemTable& Binding : ItemTables)
-        {
-            Result->AcquisitionTables.AddUnique(Binding.TargetTable.Get());
-            Result->AcquisitionTables.AddUnique(Binding.AdditionalRows.Get());
-        }
-        ItemRowIds.Append(LocalRows);
-    }
-    return Result;
-}
-
 static UGodFallPackRegistryState* Get()
 {
     if (!State)
     {
-        FString Root = FPaths::ProjectContentDir();
-#if WITH_EDITOR
-        if (GIsEditor && !IsRunningCommandlet()) { Root = FPaths::ProjectSavedDir() / TEXT("GodFallGitHubEditor"); }
-#endif
-        State = Load(Root / TEXT("Paks/GodFallGitHub/.godfall-github.json"));
-        State->bRemoteAcquisitionAvailable = !FPaths::FileExists(Root / TEXT("GodFallGitHubSync/acquisition-unavailable"));
+        // Compatibility state remains empty: Unreal-authored assets own acquisition.
+        // Never read old GitHub manifests or admit previously downloaded caches.
+        State = NewObject<UGodFallPackRegistryState>();
+        State->AddToRoot();
+        State->Source = TEXT("Unreal-authored catalogs");
+        State->bRemoteAcquisitionAvailable = false;
         UE_LOG(LogGodFallPacks, Display, TEXT("Registry ready: Catalogs=%d Characters=%d Clothing=%d Weapons=%d Issues=%d SavedDir=%s"),
             State->Catalogs.Num(), State->Characters.Num(), State->Clothing.Num(), State->Weapons.Num(), State->Issues.Num(), *FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir()));
     }
@@ -206,11 +70,7 @@ static UGodFallPackRegistryState* Get()
 
 bool UGodFallPackLibrary::IsEditorPackSyncAllowed()
 {
-#if WITH_EDITOR
-    return GIsEditor && !IsRunningCommandlet();
-#else
-    return false;
-#endif
+    return false; // Retained for callers of the retired editor downloader.
 }
 
 TArray<UObject*> UGodFallPackLibrary::GetExternalCharacterProfiles()
@@ -326,16 +186,12 @@ UDataTable* UGodFallPackLibrary::GetRuntimeItemTable(UDataTable* AuthoredTable)
 
 bool UGodFallPackLibrary::ShouldPreferGitHubItems()
 {
-    const auto* Registry = GodFallPacks::Get();
-    return Registry->bRemoteAcquisitionAvailable && (!Registry->Clothing.IsEmpty() || !Registry->Weapons.IsEmpty());
+    return false; // GitHub is version control, not a runtime item source.
 }
 
 bool UGodFallPackLibrary::IsPreferredLootDefinition(UObject* Definition)
 {
-    if (!IsValid(Definition)) { return false; }
-    const auto* Registry = GodFallPacks::Get();
-    const bool External = Registry->Clothing.Contains(Definition) || Registry->Weapons.Contains(Definition->GetClass());
-    return ShouldPreferGitHubItems() ? External : !External;
+    return IsValid(Definition);
 }
 
 bool UGodFallPackLibrary::ExtendGenericWeaponPickupPool(UObject* Pickup)
@@ -345,16 +201,7 @@ bool UGodFallPackLibrary::ExtendGenericWeaponPickupPool(UObject* Pickup)
     const FClassProperty* Element = Array ? CastField<FClassProperty>(Array->Inner) : nullptr;
     if (!Element) { return false; }
     FScriptArrayHelper Values(Array, Array->ContainerPtrToValuePtr<void>(Pickup));
-    if (Pickup->GetClass()->GetPathName() != TEXT("/Game/GF/Weapons/Pickups/BP_GF_WeaponPickup.BP_GF_WeaponPickup_C") || !ShouldPreferGitHubItems())
-    { return Values.Num() > 0; }
-    for (UClass* Class : GodFallPacks::Get()->Weapons) { if (!Class->IsChildOf(Element->MetaClass)) { return false; } }
-    Values.EmptyValues();
-    for (UClass* Class : GodFallPacks::Get()->Weapons)
-    {
-        bool Found = false;
-        for (int32 Index = 0; Index < Values.Num(); ++Index) { Found |= Element->GetObjectPropertyValue(Values.GetRawPtr(Index)) == Class; }
-        if (!Found) { Element->SetObjectPropertyValue(Values.GetRawPtr(Values.AddValue()), Class); }
-    }
+    // Both generic and specialized pickups keep their authored arrays unchanged.
     return Values.Num() > 0;
 }
 
@@ -496,11 +343,10 @@ bool UGodFallPackLibrary::ReloadEditorFixture(const FString& OwnershipRecord, co
         for (const FWorldContext& Context : GEngine->GetWorldContexts())
         { if (Context.WorldType == EWorldType::PIE) { Error = TEXT("Stop PIE before replacing the fixture registry."); return false; } }
     }
-    if (!OwnershipRecord.IsEmpty() && !FPaths::FileExists(OwnershipRecord))
-    { Error = TEXT("Fixture ownership record does not exist."); return false; }
+    if (!OwnershipRecord.IsEmpty())
+    { Error = TEXT("External pack admission has been removed; use Unreal-authored items."); return false; }
     GodFallPacks::Reset();
     GodFallPacks::PrivateEditorSaveSlot = PrivateSaveSlot;
-    if (!OwnershipRecord.IsEmpty()) { GodFallPacks::State = GodFallPacks::Load(OwnershipRecord); }
     return true;
 #else
     Error = TEXT("Fixture overrides are unavailable in a packaged game."); return false;

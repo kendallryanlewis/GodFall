@@ -1,17 +1,12 @@
-# GodFall Content
+# GodFall development
 
-Content source for GodFall characters, armor, and weapons.
+Manage armor and weapons in Unreal Editor. GitHub is version control; the editor and game do not download or admit GitHub item packs.
 
-Item folders are under [`GameItems`](GameItems/README.md).
+- Armor definitions are managed in `/Game/GF/Items/Armor/Data/DA_GF_ArmorCatalog`.
+- Generic weapon loot uses `ApprovedDefinitionClasses` on `/Game/GF/Weapons/Pickups/BP_GF_WeaponPickup`. Specialized pickups retain their own approved lists.
+- The free store uses the local Sword and Dagger definition Blueprints in `/Game/GF/Weapons/Definitions`, plus the authored armor catalog. Existing weapon membership is preserved; adding another weapon to store membership currently requires updating `GetFreeStoreDefinitions`.
+- Walk up to the Quartermaster in the Vertical Slice and press E (gamepad X / Square) to claim items free. No pause-menu store button.
 
-The [Windows startup launcher](launcher/README.md) downloads the complete packaged game from [GitHub release content](GameContent/README.md), then synchronizes additional prepared classic `.pak` files before launch. GitHub Actions publishes the extra-pack list whenever category-folder content changes.
+Edit and save assets in Unreal, then commit/push source changes through version control. Pull source changes before opening the editor. No game executable or content-pack build is needed for ordinary editor asset changes. This repository contains the plugin sources and historical delivery artifacts; its old cooked packs are not editable source assets or a complete source-project checkout.
 
-## Setup status
-
-Download [GodFall-Launcher.zip](https://github.com/kendallryanlewis/GodFall/releases/download/godfall-content-20261025-github-items/GodFall-Launcher.zip), follow its HOW-TO-PLAY instructions, and open `Play-GodFall.cmd`. The first launch downloads the complete game from GitHub; later launches check for updates. Player data stays outside the version folders.
-
-In the Vertical Slice, walk up to the **Quartermaster** beside the practice-area starting path and press **E** (gamepad X / Square) to open the **Free Store**. Claim armor and weapons at no cost, then use Back or Escape to return to gameplay. The pause menu no longer has a store button. Characters remain free through character selection. This release is a Development preview.
-
-Usable GitHub armor and weapons supply generic loot and free-store offers. If the catalog is empty or unavailable, local armor and weapons are available instead. The editor plugin also synchronizes packs when GodFall_Clean opens; restart the editor after changing published packs. Downloads stay in a separate Saved cache, and existing source items and player saves are preserved.
-
-The [native runtime module and catalog contract](Plugins/GodFallPackRuntime/README.md) also support additional characters, armor, and weapons. Compatible packs belong in `GameItems` with their descriptors; a mesh-only pack does not define a playable item. The original integration passed actual cooked-pack registration/removal in a Windows Development game (each category0→1→0). Disposable verification packs are not published content.
+`GameItems`, `GameContent`, and `launcher` retain historical distribution files. They are not the current development workflow. The automatic item-manifest workflow and the editor downloader have been removed. Previously published releases are unchanged snapshots and do not receive this editor-only update.

@@ -63,7 +63,7 @@ class GODFALLPACKRUNTIME_API UGodFallPackLibrary : public UBlueprintFunctionLibr
 {
     GENERATED_BODY()
 public:
-    /** Startup Python uses this to exclude cooks, commandlets and packaged games. */
+    /** Compatibility API: automatic pack synchronization has been removed; always false. */
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static bool IsEditorPackSyncAllowed();
 
@@ -92,15 +92,15 @@ public:
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static UDataTable* GetRuntimeItemTable(UDataTable* AuthoredTable);
 
-    /** Prefer admitted GitHub armor/weapons; an empty or unavailable source uses local items. */
+    /** Compatibility API: GitHub acquisition is retired; always false. */
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static bool ShouldPreferGitHubItems();
 
-    /** Acquisition filter only. Lookup and restoration retain both local and external definitions. */
+    /** Validate a definition from the Unreal-authored acquisition lists. */
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static bool IsPreferredLootDefinition(UObject* Definition);
 
-    /** Prepare the generic preferred pool; specialized pools retain their policy. False means no candidate. */
+    /** Validate the authored pickup pool without replacing it. False means no candidate. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs", meta=(DefaultToSelf="Pickup"))
     static bool ExtendGenericWeaponPickupPool(UObject* Pickup);
 
@@ -133,7 +133,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="GodFall|Store")
     static UUserWidget* OpenFreeStore(UUserWidget* Menu, UButton* SourceButton);
 
-    /** Preferred armor and weapons, falling back to local definitions; no startup grants. */
+    /** Unreal armor catalog and local Sword/Dagger definitions; no startup grants. */
     UFUNCTION(BlueprintPure, Category="GodFall|Store")
     static TArray<UObject*> GetFreeStoreDefinitions();
 
@@ -141,7 +141,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="GodFall|Store", meta=(WorldContext="WorldContextObject"))
     static bool ClaimFreeStoreItem(UObject* WorldContextObject, UObject* Definition, FName& InstanceId, FString& Error);
 
-    /** Editor-only fixture admission; refuses PIE and always refuses a packaged game. */
+    /** Editor-only private save override; rejects external records, PIE and packaged games. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs|Testing", meta=(DevelopmentOnly))
     static bool ReloadEditorFixture(const FString& OwnershipRecord, const FString& PrivateSaveSlot, FString& Error);
 };

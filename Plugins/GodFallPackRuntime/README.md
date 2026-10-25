@@ -1,3 +1,13 @@
+# Current development behavior
+
+The module retains its existing name and Blueprint APIs for compatibility with the shopkeeper, inventory and free store. Automatic GitHub downloads and ownership-record loading have been removed. Old caches are not registered. The registry is empty; authored Unreal definitions control acquisition.
+
+The free store reads the local Sword/Dagger definitions and `DA_GF_ArmorCatalog`. Generic and specialized weapon pickups retain their authored arrays. GitHub is version control only. Recompile the editor module after native code changes; ordinary asset edits need no game executable build.
+
+The contract below documents the **retired distribution implementation**, not the current workflow. Historical pack fixtures and release checks are not current acceptance tests.
+
+---
+
 # GodFall pack runtime
 
 Native UE5.8 Win64 module for GodFall_Clean. It is disabled by default; the base game must explicitly enable and compile it, cook the base schemas, and include the Blueprint integration. The live GodFall_Clean project enables it, and its rebuilt Windows Development game passed real cooked-pack admission and removal.

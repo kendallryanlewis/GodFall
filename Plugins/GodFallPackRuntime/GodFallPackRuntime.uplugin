@@ -3,7 +3,7 @@
   "Version": 1,
   "VersionName": "0.1.0",
   "FriendlyName": "GodFall Pack Runtime",
-  "Description": "GitHub character packs and preferred armor/weapon loot and store items, with local fallback.",
+  "Description": "Unreal-managed equipment, free store and Quartermaster. Automatic GitHub acquisition is removed.",
   "Category": "GodFall",
   "CanContainContent": true,
   "EnabledByDefault": false,

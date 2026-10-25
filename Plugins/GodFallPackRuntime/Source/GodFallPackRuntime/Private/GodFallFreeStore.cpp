@@ -100,9 +100,7 @@ TArray<UObject*> UGodFallPackLibrary::GetFreeStoreDefinitions()
     auto Add=[&](UObject* Definition){const FName Id=Name(Definition,TEXT("DefinitionId"));if(IsPreferredLootDefinition(Definition)&&!Id.IsNone()&&!Ids.Contains(Id)){Ids.Add(Id);Result.Add(Definition);}};
     for(const TCHAR* Path:{TEXT("/Game/GF/Weapons/Definitions/BP_GF_WeaponDefinition_TestSword.BP_GF_WeaponDefinition_TestSword_C"),TEXT("/Game/GF/Weapons/Definitions/BP_GF_WeaponDefinition_TestDagger.BP_GF_WeaponDefinition_TestDagger_C")})
         if(UClass* Class=LoadClass<UObject>(nullptr,Path))Add(Class->GetDefaultObject());
-    for(UClass* Class:GetExternalWeaponDefinitions())if(Class)Add(Class->GetDefaultObject());
-    UObject* Authored=LoadObject<UObject>(nullptr,TEXT("/Game/GF/Items/Armor/Data/DA_GF_ArmorCatalog.DA_GF_ArmorCatalog"));
-    UObject* Catalog=Authored?GetRuntimeClothingCatalog(Authored,Authored->GetClass()):nullptr;
+    UObject* Catalog=LoadObject<UObject>(nullptr,TEXT("/Game/GF/Items/Armor/Data/DA_GF_ArmorCatalog.DA_GF_ArmorCatalog"));
     auto* Array=Catalog?CastField<FArrayProperty>(Field(Catalog->GetClass(),TEXT("Definitions"))):nullptr;
     auto* Value=Array?CastField<FObjectPropertyBase>(Array->Inner):nullptr;
     if(Array&&Value){FScriptArrayHelper Helper(Array,Array->ContainerPtrToValuePtr<void>(Catalog));for(int32 I=0;I<Helper.Num();++I)Add(Value->GetObjectPropertyValue(Helper.GetRawPtr(I)));}

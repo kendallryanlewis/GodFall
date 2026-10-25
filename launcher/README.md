@@ -1,3 +1,5 @@
+> Historical distribution tools. The current GodFall development project opens directly in Unreal Editor and uses authored local items. These scripts are not used by editor startup; old releases are unchanged. Do not run them for normal asset development.
+
 # GodFall startup content sync
 
 `Play-GodFall.cmd` is the Windows entry point. Keep it beside `Start-GodFallRelease.ps1` and `Start-GodFall.ps1`. The first launch downloads the complete game from its published GitHub release; later launches check for a new complete version and additional item packs before starting. Game content is installed under `%LOCALAPPDATA%\GodFallGitHub\versions`; player data is separate under `PlayerData`. See the [full-content contract](../GameContent/README.md).
