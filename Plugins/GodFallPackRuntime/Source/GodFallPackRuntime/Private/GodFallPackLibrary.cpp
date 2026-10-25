@@ -191,12 +191,26 @@ static UGodFallPackRegistryState* Get()
 {
     if (!State)
     {
-        State = Load(FPaths::ProjectContentDir() / TEXT("Paks/GodFallGitHub/.godfall-github.json"));
+        FString Root = FPaths::ProjectContentDir();
+#if WITH_EDITOR
+        if (GIsEditor && !IsRunningCommandlet()) { Root = FPaths::ProjectSavedDir() / TEXT("GodFallGitHubEditor"); }
+#endif
+        State = Load(Root / TEXT("Paks/GodFallGitHub/.godfall-github.json"));
+        State->bRemoteAcquisitionAvailable = !FPaths::FileExists(Root / TEXT("GodFallGitHubSync/acquisition-unavailable"));
         UE_LOG(LogGodFallPacks, Display, TEXT("Registry ready: Catalogs=%d Characters=%d Clothing=%d Weapons=%d Issues=%d SavedDir=%s"),
             State->Catalogs.Num(), State->Characters.Num(), State->Clothing.Num(), State->Weapons.Num(), State->Issues.Num(), *FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir()));
     }
     return State;
 }
+}
+
+bool UGodFallPackLibrary::IsEditorPackSyncAllowed()
+{
+#if WITH_EDITOR
+    return GIsEditor && !IsRunningCommandlet();
+#else
+    return false;
+#endif
 }
 
 TArray<UObject*> UGodFallPackLibrary::GetExternalCharacterProfiles()
@@ -310,22 +324,38 @@ UDataTable* UGodFallPackLibrary::GetRuntimeItemTable(UDataTable* AuthoredTable)
     return Copy;
 }
 
+bool UGodFallPackLibrary::ShouldPreferGitHubItems()
+{
+    const auto* Registry = GodFallPacks::Get();
+    return Registry->bRemoteAcquisitionAvailable && (!Registry->Clothing.IsEmpty() || !Registry->Weapons.IsEmpty());
+}
+
+bool UGodFallPackLibrary::IsPreferredLootDefinition(UObject* Definition)
+{
+    if (!IsValid(Definition)) { return false; }
+    const auto* Registry = GodFallPacks::Get();
+    const bool External = Registry->Clothing.Contains(Definition) || Registry->Weapons.Contains(Definition->GetClass());
+    return ShouldPreferGitHubItems() ? External : !External;
+}
+
 bool UGodFallPackLibrary::ExtendGenericWeaponPickupPool(UObject* Pickup)
 {
-    if (!Pickup || Pickup->HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject) ||
-        Pickup->GetClass()->GetPathName() != TEXT("/Game/GF/Weapons/Pickups/BP_GF_WeaponPickup.BP_GF_WeaponPickup_C")) { return false; }
+    if (!Pickup || Pickup->HasAnyFlags(RF_ClassDefaultObject | RF_ArchetypeObject)) { return false; }
     const FArrayProperty* Array = FindFProperty<FArrayProperty>(Pickup->GetClass(), TEXT("ApprovedDefinitionClasses"));
     const FClassProperty* Element = Array ? CastField<FClassProperty>(Array->Inner) : nullptr;
     if (!Element) { return false; }
-    for (UClass* Class : GodFallPacks::Get()->Weapons) { if (!Class->IsChildOf(Element->MetaClass)) { return false; } }
     FScriptArrayHelper Values(Array, Array->ContainerPtrToValuePtr<void>(Pickup));
+    if (Pickup->GetClass()->GetPathName() != TEXT("/Game/GF/Weapons/Pickups/BP_GF_WeaponPickup.BP_GF_WeaponPickup_C") || !ShouldPreferGitHubItems())
+    { return Values.Num() > 0; }
+    for (UClass* Class : GodFallPacks::Get()->Weapons) { if (!Class->IsChildOf(Element->MetaClass)) { return false; } }
+    Values.EmptyValues();
     for (UClass* Class : GodFallPacks::Get()->Weapons)
     {
         bool Found = false;
         for (int32 Index = 0; Index < Values.Num(); ++Index) { Found |= Element->GetObjectPropertyValue(Values.GetRawPtr(Index)) == Class; }
         if (!Found) { Element->SetObjectPropertyValue(Values.GetRawPtr(Values.AddValue()), Class); }
     }
-    return true;
+    return Values.Num() > 0;
 }
 
 TArray<UClass*> UGodFallPackLibrary::GetExternalWeaponDefinitions()

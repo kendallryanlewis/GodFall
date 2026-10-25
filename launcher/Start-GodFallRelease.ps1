@@ -92,7 +92,7 @@ function Test-Version([string]$Directory,$Manifest) {
 function Sync-Items([string]$VersionDirectory) {
     $itemLauncher=Join-Path $PSScriptRoot 'Start-GodFall.ps1'
     if(-not(Test-Path -LiteralPath $itemLauncher)){throw 'Companion Start-GodFall.ps1 is missing'}
-    & powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File $itemLauncher -GameRoot (Join-Path $VersionDirectory 'GodFall_Clean') -SyncOnly -RepositoryBaseUrl $ItemRepositoryBaseUrl
+    & powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File $itemLauncher -GameRoot (Join-Path $VersionDirectory 'GodFall_Clean') -SyncOnly -AllowLocalFallback -RepositoryBaseUrl $ItemRepositoryBaseUrl
     if($LASTEXITCODE -ne 0){throw 'Additional content synchronization failed; game was not launched'}
 }
 

@@ -97,7 +97,7 @@ void RemoveUncommittedWeapon(UObject* Registry,UObject* Instance,FName Id)
 TArray<UObject*> UGodFallPackLibrary::GetFreeStoreDefinitions()
 {
     TArray<UObject*> Result;TSet<FName> Ids;
-    auto Add=[&](UObject* Definition){const FName Id=Name(Definition,TEXT("DefinitionId"));if(!Id.IsNone()&&!Ids.Contains(Id)){Ids.Add(Id);Result.Add(Definition);}};
+    auto Add=[&](UObject* Definition){const FName Id=Name(Definition,TEXT("DefinitionId"));if(IsPreferredLootDefinition(Definition)&&!Id.IsNone()&&!Ids.Contains(Id)){Ids.Add(Id);Result.Add(Definition);}};
     for(const TCHAR* Path:{TEXT("/Game/GF/Weapons/Definitions/BP_GF_WeaponDefinition_TestSword.BP_GF_WeaponDefinition_TestSword_C"),TEXT("/Game/GF/Weapons/Definitions/BP_GF_WeaponDefinition_TestDagger.BP_GF_WeaponDefinition_TestDagger_C")})
         if(UClass* Class=LoadClass<UObject>(nullptr,Path))Add(Class->GetDefaultObject());
     for(UClass* Class:GetExternalWeaponDefinitions())if(Class)Add(Class->GetDefaultObject());
@@ -197,7 +197,7 @@ TSharedRef<SWidget> UGodFallFreeStore::RebuildWidget()
         auto* Column=WidgetTree->ConstructWidget<UVerticalBox>();Frame->SetContent(Column);
         auto Text=[&](const FText& Content,int32 Size){auto* T=WidgetTree->ConstructWidget<UTextBlock>();T->SetText(Content);T->SetColorAndOpacity(FSlateColor(FLinearColor(0.94f,0.88f,0.73f)));FSlateFontInfo Font=T->GetFont();Font.Size=Size;T->SetFont(Font);T->SetAutoWrapText(true);return T;};
         Column->AddChildToVerticalBox(Text(NSLOCTEXT("GodFallStore","Title","FREE STORE"),28))->SetPadding(FMargin(0,0,0,8));
-        Column->AddChildToVerticalBox(Text(NSLOCTEXT("GodFallStore","Subtitle","Clothing and weapons for your inventory. Every claim is free."),17))->SetPadding(FMargin(0,0,0,12));
+        Column->AddChildToVerticalBox(Text(NSLOCTEXT("GodFallStore","Subtitle","Armor and weapons for your inventory. Every claim is free."),17))->SetPadding(FMargin(0,0,0,12));
         auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>();Column->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
         int32 Index=0;
         for(UObject* Definition:UGodFallPackLibrary::GetFreeStoreDefinitions())

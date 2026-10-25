@@ -3,11 +3,11 @@
   "Version": 1,
   "VersionName": "0.1.0",
   "FriendlyName": "GodFall Pack Runtime",
-  "Description": "Runtime registration of prepared GodFall character, clothing and weapon packs.",
+  "Description": "GitHub character packs and preferred armor/weapon loot and store items, with local fallback.",
   "Category": "GodFall",
-  "CanContainContent": false,
+  "CanContainContent": true,
   "EnabledByDefault": false,
   "SupportedTargetPlatforms": ["Win64"],
   "Modules": [{"Name": "GodFallPackRuntime", "Type": "Runtime", "LoadingPhase": "Default"}],
-  "Plugins": [{"Name": "EnhancedInput", "Enabled": true}]
+  "Plugins": [{"Name": "EnhancedInput", "Enabled": true}, {"Name": "PythonScriptPlugin", "Enabled": true, "TargetAllowList": ["Editor"]}]
 }

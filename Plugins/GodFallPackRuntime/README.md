@@ -19,7 +19,13 @@ The catalog is a cooked `GodFallPackDefinition` DataAsset. Its `PackId` must be 
 
 For a weapon acquisition row, use the weapon's `DefinitionId` as its row name, existing weapon category/equipment metadata, and `BaseInfo.MaxStackSize=1`. Weapon DefinitionIds must be unique. The inventory bridge calls the existing permanent weapon-instance factory once per stored slot, retaining the complete authored item template and generating its identity/rolls there. Table lookup alone does not create a rolled weapon. Invalid stack sizes leave the base table in use. Private PIE checks passed actual stored payload, unique identity, capacity rejection, equipment and fresh Continue without rerolling.
 
-Runtime queries use transient catalog/table copies. Base rows cannot be shadowed. Composite item-table queries include extensions targeting their constituent tables. Generic weapon pickups may include external definitions; specialized pickup subclasses keep their configured pools.
+Runtime lookup queries use transient combined catalog/table copies so owned local items remain resolvable. Base rows cannot be shadowed. Composite item-table queries include extensions targeting their constituent tables. Generic weapon pickups and random armor loot prefer admitted GitHub items when the remote catalog supplies armor or weapons; specialized pickup subclasses keep their configured pools. Empty or unavailable remote content selects local acquisition. If GitHub supplies only one item category, local items from the other category are not mixed into the preferred pool.
+
+## Unreal Editor startup
+
+The editor companion synchronizes the same GitHub manifest once when GodFall_Clean opens. It validates downloads in `Saved/GodFallGitHubEditor`, extracts only cooked assets under `/Game/GFExternal/` into an owned cache, and registers that cache after engine initialization. Source `Content` and save files are never replaced. Start Play normally after the editor opens. Restart the editor to synchronize additions and removals; already loaded packages are not replaced in memory. Cook commandlets do not run this downloader or include the cache.
+
+Use prepared UE 5.8 Win64 classic `.pak` files and test their cooked classes against this exact base build. The internal `ClothingDefinitions` field represents armor and remains unchanged for pack compatibility. A failed connection keeps verified cached definitions available for existing-item lookup while selecting local armor and weapons for new loot and free-store claims.
 
 ## Base game integration status
 
@@ -37,12 +43,12 @@ The registry reads the launcher's owned `.godfall-github.json` after startup pac
 
 The Vertical Slice has one placed `GodFallShopkeeper` near the practice-area spawn. Its local Enhanced Input action uses E or gamepad west (X / Square) and only opens the free store within 240 units while gameplay is active. A visible Quartermaster prompt identifies the NPC. The store pauses gameplay, prevents duplicate opening, and returns directly to gameplay on Back or Escape. The pause-menu installer hook has been removed.
 
-The runtime catalog lists the approved base weapon definitions and armor catalog plus admitted external definitions. Claims use the existing permanent-item factories and saved purchase transaction with a zero listing price. They preserve Gold/Dust, capacity, identity, rolls, equipment and save behavior. Existing paid shops and recipes retain their authored values. The purchase helper permits zero and still rejects negative prices. Character selection remains available separately at no cost.
+The free store lists admitted GitHub armor and weapons when usable items are available, otherwise approved local armor and weapons. Claims use the existing permanent-item factories and saved purchase transaction with a zero listing price. They preserve Gold/Dust, capacity, identity, rolls, equipment and save behavior. Existing paid shops and recipes retain their authored values. The purchase helper permits zero and still rejects negative prices. Character selection remains available separately at no cost.
 
 The existing apply-weapon chain refreshes the existing Player grip function when an instance is applied, so newly equipped purchased weapons attach immediately. No grip transforms, stat formulas or animations are changed by this integration.
 
 ## Packaging
 
-Build cooked classic Paks against the exact base GodFall release, engine build and Win64 target, with IoStore disabled. Include the catalog and all its soft-referenced external assets in the cook. Do not bundle copies of base content. Keep packs at most95MiB for the current GitHub publisher. Upload the `.pak` and its descriptor together to `GameItems/Models`, `Clothing` or `Weapons`, then wait for the publishing workflow.
+Build cooked classic Paks against the exact base GodFall release, engine build and Win64 target, with IoStore disabled. Include the catalog and all its soft-referenced external assets in the cook. Do not bundle copies of base content. Keep packs at most95MiB for the current GitHub publisher. Upload the `.pak` and its descriptor together to `GameItems/Models`, `Armor` or `Weapons`, then wait for the publishing workflow.
 
 The category folder organizes uploads; the catalog declares the actual content. Raw meshes, editor-only assets and uncooked packages cannot substitute for cooked game definitions. Test each release pack against its exact base build; the integration test used UE 5.8.2-56702186+++UE5+Release-5.8 Win64 Development with classic Paks.

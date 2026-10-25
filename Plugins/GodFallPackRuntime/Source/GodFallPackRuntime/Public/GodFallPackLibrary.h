@@ -54,6 +54,7 @@ public:
     UPROPERTY(Transient) TArray<TObjectPtr<UDataTable>> AcquisitionTables;
     UPROPERTY(Transient) TMap<TObjectPtr<UObject>, TObjectPtr<UObject>> RuntimeCopies;
     FString Source;
+    bool bRemoteAcquisitionAvailable = true;
     TArray<FString> Issues;
 };
 
@@ -62,6 +63,10 @@ class GODFALLPACKRUNTIME_API UGodFallPackLibrary : public UBlueprintFunctionLibr
 {
     GENERATED_BODY()
 public:
+    /** Startup Python uses this to exclude cooks, commandlets and packaged games. */
+    UFUNCTION(BlueprintPure, Category="GodFall|Packs")
+    static bool IsEditorPackSyncAllowed();
+
     /** Append-only external profiles; the base game's profiles retain their ownership. */
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static TArray<UObject*> GetExternalCharacterProfiles();
@@ -87,7 +92,15 @@ public:
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static UDataTable* GetRuntimeItemTable(UDataTable* AuthoredTable);
 
-    /** Only the generic pickup pool is extended; specialized variant pools retain their policy. */
+    /** Prefer admitted GitHub armor/weapons; an empty or unavailable source uses local items. */
+    UFUNCTION(BlueprintPure, Category="GodFall|Packs")
+    static bool ShouldPreferGitHubItems();
+
+    /** Acquisition filter only. Lookup and restoration retain both local and external definitions. */
+    UFUNCTION(BlueprintPure, Category="GodFall|Packs")
+    static bool IsPreferredLootDefinition(UObject* Definition);
+
+    /** Prepare the generic preferred pool; specialized pools retain their policy. False means no candidate. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs", meta=(DefaultToSelf="Pickup"))
     static bool ExtendGenericWeaponPickupPool(UObject* Pickup);
 
@@ -120,7 +133,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="GodFall|Store")
     static UUserWidget* OpenFreeStore(UUserWidget* Menu, UButton* SourceButton);
 
-    /** Approved base and admitted external item definitions; no startup grants. */
+    /** Preferred armor and weapons, falling back to local definitions; no startup grants. */
     UFUNCTION(BlueprintPure, Category="GodFall|Store")
     static TArray<UObject*> GetFreeStoreDefinitions();
 

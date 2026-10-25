@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 
-CATEGORIES = ("Models", "Clothing", "Weapons")
+CATEGORIES = ("Models", "Armor", "Clothing", "Weapons")
 MAX_BYTES = 95 * 1024 * 1024
 
 
@@ -30,7 +30,7 @@ def build(root: Path, commit: str) -> dict:
             if path.suffix.lower() != ".pak":
                 continue
             relative = path.relative_to(root).as_posix()
-            if not re.fullmatch(r"GameItems/(Models|Clothing|Weapons)/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.pak", relative):
+            if not re.fullmatch(r"GameItems/(Models|Armor|Clothing|Weapons)/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.pak", relative):
                 raise ValueError(f"Use letters, digits, underscores, and hyphens in pack paths: {relative}")
             key = relative.casefold()
             if key in seen:

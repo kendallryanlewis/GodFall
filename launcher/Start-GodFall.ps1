@@ -5,9 +5,11 @@ Run with -SyncOnly to synchronize without starting the game.
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)][string]$GameRoot,
+    [string]$GameRoot,
+    [string]$EditorProject,
     [string]$GameExe,
     [switch]$SyncOnly,
+    [switch]$AllowLocalFallback,
     [string]$RepositoryBaseUrl = 'https://raw.githubusercontent.com/kendallryanlewis/GodFall',
     [int]$TimeoutSeconds = 45
 )
@@ -81,7 +83,7 @@ function Assert-Manifest($Manifest) {
     $catalogs = @{}
     foreach ($pack in @($Manifest.packs)) {
         if ($pack.id -cnotmatch '^[0-9a-f]{24}$' -or $pack.sha256 -cnotmatch '^[0-9a-f]{64}$') { throw 'Invalid pack ID or SHA-256' }
-        if ($pack.path -cnotmatch '^GameItems/(Models|Clothing|Weapons)/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.pak$') { throw 'Invalid pack path' }
+        if ($pack.path -cnotmatch '^GameItems/(Models|Armor|Clothing|Weapons)/(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+\.pak$') { throw 'Invalid pack path' }
         if ($pack.catalog -cnotmatch '^/Game/GFExternal/(?:[A-Za-z0-9_]+/)*([A-Za-z0-9_]+)\.\1$') { throw 'Invalid external pack catalog path' }
         if (($pack.size -isnot [int] -and $pack.size -isnot [long]) -or $pack.size -le 0 -or $pack.size -gt $script:MaxPackBytes) { throw 'Invalid or oversized pack' }
         if ($ids.ContainsKey($pack.id) -or $paths.ContainsKey($pack.path) -or $catalogs.ContainsKey($pack.catalog)) { throw 'Duplicate pack identity, path or catalog' }
@@ -157,11 +159,20 @@ function Save-Download([string]$Url, [string]$Destination, [long]$Maximum) {
 }
 
 try {
+    if ($EditorProject) {
+        if ($GameRoot -or $GameExe -or -not $SyncOnly) { throw 'Editor cache synchronization requires only -EditorProject and -SyncOnly' }
+        $projectFile = [IO.Path]::GetFullPath($EditorProject)
+        if ([IO.Path]::GetFileName($projectFile) -cne 'GodFall_Clean.uproject' -or -not (Test-Path -LiteralPath $projectFile -PathType Leaf)) { throw 'EditorProject must name the existing GodFall_Clean.uproject' }
+        $RootPath = [IO.Path]::GetDirectoryName($projectFile)
+        $ContentRoot = [IO.Path]::GetFullPath((Join-Path $RootPath 'Saved/GodFallGitHubEditor'))
+    } else {
+    if (-not $GameRoot) { throw 'Provide a packaged GameRoot or an explicit EditorProject' }
     $RootPath = [IO.Path]::GetFullPath($GameRoot).TrimEnd([char[]]'\/')
     # Require a packaged project directory, not a live Unreal source project.
     if (-not (Test-Path -LiteralPath (Join-Path $RootPath 'Content/Paks') -PathType Container)) { throw 'GameRoot must contain the packaged GodFall_Clean Content/Paks directory' }
     if (@(Get-ChildItem -LiteralPath $RootPath -Filter '*.uproject' -File).Count -gt 0) { throw 'Use a packaged game directory, not the live Unreal project' }
     $ContentRoot = [IO.Path]::GetFullPath((Join-Path $RootPath 'Content'))
+    }
     $Active = Join-Path $ContentRoot 'Paks/GodFallGitHub'
     $Work = Join-Path $ContentRoot 'GodFallGitHubSync'
     $Pending = Join-Path $Work 'pending'
@@ -169,9 +180,18 @@ try {
     if ([Math]::Max($Active.Length, $Pending.Length) + 51 -gt 245) { throw 'Use a shorter packaged game path for Windows PowerShell 5.1' }
     $null = Assert-SafeDirectory $Active
     $null = Assert-SafeDirectory $Work
+    if ($EditorProject) {
+        $pakParent = Assert-SafeDirectory (Join-Path $ContentRoot 'Paks')
+        if (-not (Test-Path -LiteralPath $pakParent)) { $null = New-Item -ItemType Directory -Path $pakParent -Force }
+    }
     if (Test-Path -LiteralPath $Work) { $null = Read-Owner $Work }
     else { $null = New-Item -ItemType Directory -Path $Work; Write-Owner $Work $null }
     $lockStream = [IO.File]::Open((Join-Path $Work 'sync.lock'), [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+    # Keep cached definitions for existing saves, but new loot/store acquisition falls
+    # back to local items unless this startup receives and validates a remote manifest.
+    $unavailable = Join-Path $Work 'acquisition-unavailable'
+    if ((Test-Path -LiteralPath $unavailable) -and ((Get-Item -LiteralPath $unavailable -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Availability marker must not be linked' }
+    [IO.File]::WriteAllText($unavailable, 'GitHub synchronization has not succeeded for this launch.')
     foreach ($process in @(Get-Process -Name 'GodFall_Clean*' -ErrorAction SilentlyContinue)) {
         if ($process.Path -and $process.Path.StartsWith($RootPath + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Close this GodFall game before synchronizing its packs' }
     }
@@ -238,14 +258,21 @@ try {
         $resultCount = @($manifest.packs).Count
     } catch {
         $syncFailure = $_.Exception.Message
+        if (-not (Test-Path -LiteralPath $Active) -and $AllowLocalFallback) {
+            $resultCount = 0
+            $resultState = 'local'
+            Write-Warning "Optional items unavailable; using local armor and weapons. $syncFailure"
+        } else {
         if (-not (Test-Path -LiteralPath $Active)) { throw }
         $cached = Assert-Cache $Active
         $resultCount = @($cached.packs).Count
         $resultState = 'cached'
         Write-Warning "Sync failed; retaining the last validated pack set. $syncFailure"
+        }
     }
     Remove-Owned $Pending
     Remove-Owned $Previous
+    if (-not $syncFailure) { Remove-Item -LiteralPath $unavailable -Force }
     Write-Output "GODFALL_SYNC state=$resultState packs=$resultCount"
     if (-not $SyncOnly) {
         # The requested game is interactive and must open normally for the player.
