@@ -172,9 +172,10 @@ public:
                         +SHorizontalBox::Slot().AutoWidth().Padding(5)[Toggle("Free store",2)]
                         +SHorizontalBox::Slot().AutoWidth().Padding(5)[Toggle("Random weapon pool",3)]
                     ]
-                    +SVerticalBox::Slot().AutoHeight().Padding(10,0,10,6)[SNew(STextBlock).AutoWrapText(true).Text(FText::FromString("Loot also respects the definition's Allow Random Loot and character compatibility. Remove disables future acquisition; existing inventory and source assets are retained."))]
+                    +SVerticalBox::Slot().AutoHeight().Padding(10,0,10,6)[SNew(STextBlock).AutoWrapText(true).Text(FText::FromString("Disable retains the item. Delete removes its definition and unshared art after backup. Deleted saved items are unequipped and removed on next Play / Continue."))]
                     +SVerticalBox::Slot().AutoHeight().Padding(8)[SNew(SHorizontalBox)
-                        +SHorizontalBox::Slot().AutoWidth().Padding(3)[Button("Remove / restore",[this]{if(const auto* E=Entry())Set(!E->bEnabled,E->bLoot,E->bFreeStore,E->bGenericWeaponLoot);})]
+                        +SHorizontalBox::Slot().AutoWidth().Padding(3)[Button("Disable / restore",[this]{if(const auto* E=Entry())Set(!E->bEnabled,E->bLoot,E->bFreeStore,E->bGenericWeaponLoot);})]
+                        +SHorizontalBox::Slot().AutoWidth().Padding(3)[Button("Delete...",[this]{if(Selected.IsValid()){const FString Path=AssetPath(Selected.Get());const bool OK=Python(TEXT("gfem.delete_item('")+Path+TEXT("')"));Status=OK?TEXT("Delete action finished. Review its result dialog."):TEXT("Deletion stopped. Review the dependency or backup error.");Reload();}})]
                         +SHorizontalBox::Slot().AutoWidth().Padding(3)[Button("Locate asset",[this]{Python(TEXT("gfem.locate('")+AssetPath(Selected.Get())+TEXT("')"));})]
                         +SHorizontalBox::Slot().AutoWidth().Padding(3)[Button("Fit selected armor draft",[this]{Python(TEXT("gfem.preview_fit()"));})]
                         +SHorizontalBox::Slot().AutoWidth().Padding(3)[Button("Approve fit",[this]{Python(TEXT("gfem.approve_fit()"));Reload();})]
@@ -203,6 +204,7 @@ public:
     }
     bool Select(UObject* Definition)
     {
+        if(!Definition){List->ClearSelection();Selection(nullptr,ESelectInfo::Direct);return true;}
         Search.Empty();Reload();for(const auto& Item:Rows)if(Item->Definition.Get()==Definition){List->SetSelection(Item);List->RequestScrollIntoView(Item);return true;}return false;
     }
 private:
@@ -244,6 +246,12 @@ void UGodFallEquipmentEditorLibrary::OpenManager()
         if(auto Window=FSlateApplication::Get().FindWidgetWindow(Tab.ToSharedRef()))Window->BringToFront(true);
     }
 }
+bool UGodFallEquipmentEditorLibrary::MaximizeManagerWindow()
+{
+    const auto Panel=GFEquipment::Panel.Pin();if(!Panel)return false;
+    const auto Window=FSlateApplication::Get().FindWidgetWindow(Panel.ToSharedRef());if(!Window)return false;
+    Window->Maximize();return true;
+}
 bool UGodFallEquipmentEditorLibrary::CaptureEditorWindow(const FString& Filename)
 {
     if(!GFEquipment::CanEdit()||!FPaths::IsUnderDirectory(Filename,TEXT("C:/Users/June/Documents/ChatGPT/GodFall/artifacts"))||FPaths::GetExtension(Filename)!=TEXT("png"))return false;
@@ -266,10 +274,12 @@ bool UGodFallEquipmentEditorLibrary::ValidateCatalog(FString& Error)
         UObject* Definition=Entry.Resolve();const FName Id=UGodFallEquipmentCatalog::DefinitionId(Definition);
         if(!Definition){if(!Entry.bEnabled)continue;Error=TEXT("An available item has a missing definition.");return false;}
         if(Id.IsNone()||Ids.Contains(Id)||Keys.Contains(Entry.Key())){Error=TEXT("Definitions require unique, nonempty IDs and paths.");return false;}
+        if(Catalog->RetiredItemPrefixes.Contains(Id)){Error=TEXT("This identity was permanently deleted. Use a new unique item ID.");return false;}
         Ids.Add(Id);Keys.Add(Entry.Key());
         if(!Entry.Weapon.IsNull())
         {
             const FName Key=GFEquipment::Name(Definition,TEXT("WeaponClassId"));
+            if(Catalog->RetiredItemPrefixes.Contains(Key)){Error=TEXT("This weapon class was permanently deleted. Use a new unique class ID.");return false;}
             if(Key.IsNone()||Classes.Contains(Key)||!GFEquipment::Object(Definition,TEXT("CombatStyleProfile"))||!GFEquipment::Object(Definition,TEXT("PresentationStaticMesh")))
             {Error=TEXT("Each weapon needs a unique weapon class, combat style and static mesh. Keep incomplete items outside the managed catalog.");return false;}
             Classes.Add(Key);

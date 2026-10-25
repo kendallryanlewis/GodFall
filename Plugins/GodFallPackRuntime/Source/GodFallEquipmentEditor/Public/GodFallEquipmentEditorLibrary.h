@@ -15,4 +15,5 @@ public:
     UFUNCTION(BlueprintCallable, Category="GodFall|Editor") static bool SaveDefinition(UObject* Definition,FString& Error);
     UFUNCTION(BlueprintCallable, Category="GodFall|Editor") static bool ValidateCatalog(FString& Error);
     UFUNCTION(BlueprintCallable, Category="GodFall|Editor") static bool CaptureEditorWindow(const FString& Filename);
+    UFUNCTION(BlueprintCallable, Category="GodFall|Editor") static bool MaximizeManagerWindow();
 };

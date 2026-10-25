@@ -25,6 +25,8 @@ class GODFALLPACKRUNTIME_API UGodFallEquipmentCatalog : public UDataAsset
     GENERATED_BODY()
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Equipment") TArray<FGodFallEquipmentEntry> Items;
+    /** Stable instance-ID prefixes retired by permanent deletion. Never reuse them. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, AdvancedDisplay, Category="Equipment") TArray<FName> RetiredItemPrefixes;
     static UGodFallEquipmentCatalog* Get();
     const FGodFallEquipmentEntry* Find(const UObject* Definition) const;
     static FName DefinitionId(const UObject* Definition);

@@ -9,7 +9,12 @@ The panel contains the equipment list, a mesh preview, definition properties, an
 3. **Add selected asset** registers an existing imported mesh, or selects an existing registered definition. Armor meshes must use the existing character/region folders. Weapon definitions live under `/Game/GF/Weapons/Definitions`.
 4. Select an item to preview its mesh and edit its definition. **Save changes** compiles weapon definitions, saves the asset, and synchronizes its Blueprint map. Stable definition and weapon-class IDs are read-only to protect saved items.
 5. Choose **Available**, **Loot**, and **Free store** independently. These availability changes save immediately. Armor loot still respects its character compatibility and **Allow Random Loot** property. **Random weapon pool** controls whether a loot-enabled weapon can appear in generic random pickups; specialized pickups retain their authored restrictions.
-6. **Remove / restore** toggles future acquisition. It retains the definition, source art and metadata used by existing inventory items. It does not delete files. New imports are drafts until enabled.
+6. **Disable / restore** toggles future acquisition while retaining source assets and owned copies. New imports are drafts until enabled.
+7. **Delete…** permanently removes the selected definition and exclusively owned art after confirmation and a verified backup. Shared meshes, materials and textures remain. If a Blueprint or level directly references the item, deletion stops and lists those references so they can be resolved first. Save edits and stop Play before deleting.
+
+On the next **Play / Continue**, deleted copies are cleared from the saved inventory before the player restores equipment, including equipped copies. Other inventory slots and progress stay intact. The original affected save is backed up under `Saved/EquipmentDeletionBackups`; asset-action backups are recorded under the GodFall automation workspace's `backups/20261025-equipment-delete/prechange/actions`. The result dialog gives the exact backup path. Deletion does not change GitHub until you commit the asset removals through version control.
+
+Deleted stable identities stay in the equipment policy's retirement ledger so older saves cannot recreate them. Use a new identity for a replacement item. **Disable / restore** cannot undo permanent deletion. Restore from backup/version control only after checking for later edits and reconciling the retirement entry and catalog references.
 
 Press **Play** to use the saved settings. The Quartermaster reads the managed free-store list; armor and weapon pickups read the loot settings. Claims retain the existing zero-cost purchase, item-roll and save behavior.
 
