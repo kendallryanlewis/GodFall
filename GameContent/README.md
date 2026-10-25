@@ -1,6 +1,8 @@
 # Complete game content
 
-Get the [standalone launcher ZIP](https://github.com/kendallryanlewis/GodFall/releases/download/godfall-content-20261025-github-items/GodFall-Launcher.zip) from the Windows Development preview. Extract its launcher files together and follow HOW-TO-PLAY.txt.
+Get the [standalone launcher ZIP](https://github.com/kendallryanlewis/GodFall/releases/download/godfall-content-20261025-equipment-catalog/GodFall-Launcher.zip) from the Windows Development preview. Extract its launcher files together and follow HOW-TO-PLAY.txt.
+
+The equipment catalog release includes a base-game catalog repair for the 54 armor and two weapon packs. Armor lookups snapshot the merged local/GitHub list once per query, avoiding repeated Blueprint loops during inventory restoration. Existing item rules, IDs, base art and player saves are retained.
 
 The full-content installer reads `manifest.json` here, then downloads the exact Windows build from its immutable GitHub release. The generated manifest names every installed file and its SHA-256 hash. Large archives are split into768MiB release assets and verified before extraction.
 

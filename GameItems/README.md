@@ -6,7 +6,7 @@
 
 `Armor/LocalArmor.pak` publishes the current 54 armor definitions. `Weapons/LocalWeapons.pak` publishes the current Sword and Dagger definitions. Their catalogs live under `/Game/GFExternal/LocalEquipment/` and retain the local items' appearance, stats, loot eligibility and character restrictions. Weapon labels retain their original names.
 
-These definition packs require the compatible GodFall_Clean UE 5.8 base game, which supplies their meshes, materials, animations and parent Blueprint policies. Use the [GitHub items release](https://github.com/kendallryanlewis/GodFall/releases/tag/godfall-content-20261025-github-items) or the matching Clean editor project. The packs do not contain standalone raw models. Original local definitions remain available for fallback and existing owned items.
+These definition packs require the compatible GodFall_Clean UE 5.8 base game, which supplies their meshes, materials, animations and parent Blueprint policies. Use the [equipment catalog release](https://github.com/kendallryanlewis/GodFall/releases/tag/godfall-content-20261025-equipment-catalog) or the matching Clean editor project. It includes the catalog-query fix needed for Continue with the full armor catalog. The packs do not contain standalone raw models. Original local definitions remain available for fallback and existing owned items.
 
 The `.gitkeep` files are directory placeholders, not game items.
 
