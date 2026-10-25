@@ -8,6 +8,6 @@
   "CanContainContent": true,
   "EnabledByDefault": false,
   "SupportedTargetPlatforms": ["Win64"],
-  "Modules": [{"Name": "GodFallPackRuntime", "Type": "Runtime", "LoadingPhase": "Default"}],
+  "Modules": [{"Name": "GodFallPackRuntime", "Type": "Runtime", "LoadingPhase": "Default"}, {"Name": "GodFallEquipmentEditor", "Type": "Editor", "LoadingPhase": "PostEngineInit"}],
   "Plugins": [{"Name": "EnhancedInput", "Enabled": true}, {"Name": "PythonScriptPlugin", "Enabled": true, "TargetAllowList": ["Editor"]}]
 }

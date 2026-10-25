@@ -2,7 +2,7 @@
 
 The module retains its existing name and Blueprint APIs for compatibility with the shopkeeper, inventory and free store. Automatic GitHub downloads and ownership-record loading have been removed. Old caches are not registered. The registry is empty; authored Unreal definitions control acquisition.
 
-The free store reads the local Sword/Dagger definitions and `DA_GF_ArmorCatalog`. Generic and specialized weapon pickups retain their authored arrays. GitHub is version control only. Recompile the editor module after native code changes; ordinary asset edits need no game executable build.
+Open **Tools → GodFall Equipment Manager** to import, edit, preview and remove equipment, and choose loot/free-store availability. The authored `DA_GF_EquipmentManager` policy drives new acquisition; the armor catalog and weapon definitions retain item identity and metadata. Specialized pickups retain their restrictions. See [Equipment Manager](EQUIPMENT_MANAGER.md). GitHub is version control only. Recompile editor modules after native code changes; ordinary asset edits need no game executable build.
 
 The contract below documents the **retired distribution implementation**, not the current workflow. Historical pack fixtures and release checks are not current acceptance tests.
 

@@ -1,5 +1,6 @@
 #include "GodFallFreeStore.h"
 #include "GodFallPackLibrary.h"
+#include "GodFallEquipmentCatalog.h"
 #include "Blueprint/WidgetTree.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Border.h"
@@ -97,7 +98,12 @@ void RemoveUncommittedWeapon(UObject* Registry,UObject* Instance,FName Id)
 TArray<UObject*> UGodFallPackLibrary::GetFreeStoreDefinitions()
 {
     TArray<UObject*> Result;TSet<FName> Ids;
-    auto Add=[&](UObject* Definition){const FName Id=Name(Definition,TEXT("DefinitionId"));if(IsPreferredLootDefinition(Definition)&&!Id.IsNone()&&!Ids.Contains(Id)){Ids.Add(Id);Result.Add(Definition);}};
+    auto Add=[&](UObject* Definition){const FName Id=Name(Definition,TEXT("DefinitionId"));if(IsValid(Definition)&&!Id.IsNone()&&!Ids.Contains(Id)){Ids.Add(Id);Result.Add(Definition);}};
+    if(const auto* Managed=UGodFallEquipmentCatalog::Get())
+    {
+        for(const auto& Entry:Managed->Items)if(Entry.bEnabled&&Entry.bFreeStore)Add(Entry.Resolve());
+        return Result;
+    }
     for(const TCHAR* Path:{TEXT("/Game/GF/Weapons/Definitions/BP_GF_WeaponDefinition_TestSword.BP_GF_WeaponDefinition_TestSword_C"),TEXT("/Game/GF/Weapons/Definitions/BP_GF_WeaponDefinition_TestDagger.BP_GF_WeaponDefinition_TestDagger_C")})
         if(UClass* Class=LoadClass<UObject>(nullptr,Path))Add(Class->GetDefaultObject());
     UObject* Catalog=LoadObject<UObject>(nullptr,TEXT("/Game/GF/Items/Armor/Data/DA_GF_ArmorCatalog.DA_GF_ArmorCatalog"));

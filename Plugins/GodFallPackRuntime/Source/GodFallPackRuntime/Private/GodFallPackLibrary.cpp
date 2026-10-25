@@ -1,4 +1,5 @@
 #include "GodFallPackLibrary.h"
+#include "GodFallEquipmentCatalog.h"
 #include "GodFallPackCharacterPicker.h"
 
 #include "Engine/Engine.h"
@@ -191,7 +192,7 @@ bool UGodFallPackLibrary::ShouldPreferGitHubItems()
 
 bool UGodFallPackLibrary::IsPreferredLootDefinition(UObject* Definition)
 {
-    return IsValid(Definition);
+    return UGodFallEquipmentCatalog::AllowsLoot(Definition);
 }
 
 bool UGodFallPackLibrary::ExtendGenericWeaponPickupPool(UObject* Pickup)
@@ -201,7 +202,26 @@ bool UGodFallPackLibrary::ExtendGenericWeaponPickupPool(UObject* Pickup)
     const FClassProperty* Element = Array ? CastField<FClassProperty>(Array->Inner) : nullptr;
     if (!Element) { return false; }
     FScriptArrayHelper Values(Array, Array->ContainerPtrToValuePtr<void>(Pickup));
-    // Both generic and specialized pickups keep their authored arrays unchanged.
+    if(UGodFallEquipmentCatalog::Get())
+    {
+        // Only the generic pickup uses the managed global pool. Specialized pickups
+        // retain their authored restrictions, intersected with acquisition settings.
+        if(Pickup->GetClass()->GetPathName()==TEXT("/Game/GF/Weapons/Pickups/BP_GF_WeaponPickup.BP_GF_WeaponPickup_C"))
+        {
+            const auto Classes=UGodFallEquipmentCatalog::WeaponClasses(true);
+            Values.EmptyValues();
+            for(UClass* Class:Classes)
+            {
+                const auto* Entry=UGodFallEquipmentCatalog::Get()->Find(Class->GetDefaultObject());
+                if(Entry&&Entry->bGenericWeaponLoot&&Class->IsChildOf(Element->MetaClass))Element->SetObjectPropertyValue(Values.GetRawPtr(Values.AddValue()),Class);
+            }
+        }
+        else for(int32 I=Values.Num()-1;I>=0;--I)
+        {
+            auto* Class=Cast<UClass>(Element->GetObjectPropertyValue(Values.GetRawPtr(I)));
+            if(!Class||!UGodFallEquipmentCatalog::AllowsLoot(Class->GetDefaultObject()))Values.RemoveValues(I);
+        }
+    }
     return Values.Num() > 0;
 }
 
@@ -247,24 +267,26 @@ bool UGodFallPackLibrary::RegisterExternalWeaponMetadata(UObject* RuntimeRegistr
         {TEXT("WeaponRotationsByClass"), TEXT("PresentationRotation")},
         {TEXT("WeaponScalesByClass"), TEXT("PresentationScale")}
     };
-    // Preflight every map/definition before applying any new key.
-    for (UClass* Class : GodFallPacks::Get()->Weapons)
+    // Retain metadata for disabled entries so already-owned items still reconstruct.
+    const auto ManagedWeapons=UGodFallEquipmentCatalog::WeaponClasses(false);
+    const auto& Weapons=ManagedWeapons;
+    // Preflight every map/definition before applying any key.
+    TSet<FName> ClassKeys;
+    for (UClass* Class : Weapons)
     {
         UObject* Definition = Class->GetDefaultObject();
         const FName Key = GodFallPacks::ReadName(Definition, TEXT("WeaponClassId"));
+        if(Key.IsNone()||ClassKeys.Contains(Key)){Error=TEXT("Managed weapons need unique, nonempty WeaponClassId values.");return false;}
+        ClassKeys.Add(Key);
         for (const FBinding& Binding : Bindings)
         {
             FMapProperty* Map = FindFProperty<FMapProperty>(RuntimeRegistry->GetClass(), Binding.Map);
             FProperty* Field = FindFProperty<FProperty>(Class, Binding.Field);
             if (!Map || !CastField<FNameProperty>(Map->KeyProp) || !Field || !Map->ValueProp->SameType(Field))
             { Error = FString::Printf(TEXT("Weapon registry schema mismatch at %s."), Binding.Map); return false; }
-            FScriptMapHelper Helper(Map, Map->ContainerPtrToValuePtr<void>(RuntimeRegistry));
-            const int32 Existing = Helper.FindMapIndexWithKey(&Key);
-            if (Existing != INDEX_NONE && !Map->ValueProp->Identical(Helper.GetValuePtr(Existing), Field->ContainerPtrToValuePtr<void>(Definition)))
-            { Error = FString::Printf(TEXT("Conflicting existing weapon class %s."), *Key.ToString()); return false; }
         }
     }
-    for (UClass* Class : GodFallPacks::Get()->Weapons)
+    for (UClass* Class : Weapons)
     {
         UObject* Definition = Class->GetDefaultObject();
         const FName Key = GodFallPacks::ReadName(Definition, TEXT("WeaponClassId"));

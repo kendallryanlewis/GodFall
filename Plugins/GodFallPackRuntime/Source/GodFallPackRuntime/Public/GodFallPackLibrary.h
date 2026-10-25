@@ -96,11 +96,11 @@ public:
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static bool ShouldPreferGitHubItems();
 
-    /** Validate a definition from the Unreal-authored acquisition lists. */
+    /** Check managed loot availability; armor also applies its authored eligibility rules. */
     UFUNCTION(BlueprintPure, Category="GodFall|Packs")
     static bool IsPreferredLootDefinition(UObject* Definition);
 
-    /** Validate the authored pickup pool without replacing it. False means no candidate. */
+    /** Apply managed generic weapon candidates or filter a specialized authored pool. False means no candidate. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs", meta=(DefaultToSelf="Pickup"))
     static bool ExtendGenericWeaponPickupPool(UObject* Pickup);
 
@@ -111,7 +111,7 @@ public:
     UFUNCTION(BlueprintPure, Category="GodFall|Packs", meta=(DeterminesOutputType="DefinitionClass"))
     static UObject* FindExternalWeaponForItemId(FName ItemId, TSubclassOf<UObject> DefinitionClass = nullptr);
 
-    /** Populate only a newly constructed runtime registry's six metadata maps. */
+    /** Populate a newly constructed runtime registry from all managed weapons, including owned-only disabled items. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs")
     static bool RegisterExternalWeaponMetadata(UObject* RuntimeRegistry, FString& Error);
 
@@ -133,7 +133,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="GodFall|Store")
     static UUserWidget* OpenFreeStore(UUserWidget* Menu, UButton* SourceButton);
 
-    /** Unreal armor catalog and local Sword/Dagger definitions; no startup grants. */
+    /** Enabled managed free-store definitions; no startup grants or downloads. */
     UFUNCTION(BlueprintPure, Category="GodFall|Store")
     static TArray<UObject*> GetFreeStoreDefinitions();
 
