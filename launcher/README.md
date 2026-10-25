@@ -2,6 +2,8 @@
 
 `Play-GodFall.cmd` is the Windows entry point. Keep it beside `Start-GodFallRelease.ps1` and `Start-GodFall.ps1`. The first launch downloads the complete game from its published GitHub release; later launches check for a new complete version and additional item packs before starting. Game content is installed under `%LOCALAPPDATA%\GodFallGitHub\versions`; player data is separate under `PlayerData`. See the [full-content contract](../GameContent/README.md).
 
+For the downloaded launcher ZIP, open **Properties → Unblock → Apply** if Windows shows that option, then extract it and open `Play-GodFall.cmd`. This lets the downloaded scripts run under the launcher's process-only RemoteSigned policy. See [Microsoft's execution-policy documentation](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-5.1). No machine-wide policy change is needed.
+
 `Start-GodFall.ps1` remains the additional-pack synchronizer for an already packaged game. Starting the game's executable directly skips update checks.
 
 The folders and downloader are published. Private editor fixtures passed new-character selection/restoration, clothing loot/equipment, permanent weapon acquisition, existing transaction/capacity rules and equipped-weapon save restoration. A rebuilt Windows Development game passed actual cooked-pack synchronization and fresh-process registration/removal: each external content category changed 0 → 1 → 0, with no registry issues and isolated test saves.

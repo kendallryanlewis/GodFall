@@ -56,7 +56,7 @@ def build(source:Path,output:Path,tag:str,revision:str):
     with zipfile.ZipFile(output/'GodFall-Launcher.zip','w',compression=zipfile.ZIP_DEFLATED) as bootstrap:
         for name in ('Play-GodFall.cmd','Start-GodFallRelease.ps1','Start-GodFall.ps1'):
             bootstrap.write(launcher/name,name)
-        bootstrap.writestr('HOW-TO-PLAY.txt','Keep these three launcher files together. Open Play-GodFall.cmd.\r\nThe first launch downloads all game content from GitHub. Later launches check for updates.\r\nThe game installs under %LOCALAPPDATA%\\GodFallGitHub; PlayerData is kept outside version folders.\r\nIn the Vertical Slice, open the pause menu and choose FREE STORE. Claims cost no currency.\r\n')
+        bootstrap.writestr('HOW-TO-PLAY.txt','For the downloaded ZIP: Properties > Unblock > Apply if Windows shows that option, then Extract All.\r\nKeep these three launcher files together. Open Play-GodFall.cmd.\r\nThe first launch downloads all game content from GitHub. Later launches check for updates.\r\nThe game installs under %LOCALAPPDATA%\\GodFallGitHub; PlayerData is kept outside version folders.\r\nIn the Vertical Slice, open the pause menu and choose FREE STORE. Claims cost no currency.\r\n')
     print(json.dumps({'files':len(files),'bytes':manifest['archive']['size'],'parts':len(parts),'tag':tag}))
     return manifest
 
