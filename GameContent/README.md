@@ -1,5 +1,7 @@
 # Complete game content
 
+Get the [standalone launcher ZIP](https://github.com/kendallryanlewis/GodFall/releases/download/godfall-content-20261024-free-store/GodFall-Launcher.zip) from the verified Windows Development preview. Extract its launcher files together and follow HOW-TO-PLAY.txt.
+
 The full-content installer reads `manifest.json` here, then downloads the exact Windows build from its immutable GitHub release. The generated manifest names every installed file and its SHA-256 hash. Large archives are split into768MiB release assets and verified before extraction.
 
 Keep `Play-GodFall.cmd`, `Start-GodFallRelease.ps1`, and `Start-GodFall.ps1` together. No game content needs to be bundled with these launcher files. `Play-GodFall.cmd` installs into `%LOCALAPPDATA%\GodFallGitHub`, checks for updates before launch, and keeps player data separately under `PlayerData`.
