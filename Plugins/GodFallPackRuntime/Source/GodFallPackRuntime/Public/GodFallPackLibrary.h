@@ -113,6 +113,21 @@ public:
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs", meta=(DefaultToSelf="SelectionWidget"))
     static bool InstallExternalCharacterEntry(UUserWidget* SelectionWidget);
 
+    /** Additive entry in the existing pause menu, only in the Vertical Slice. */
+    UFUNCTION(BlueprintCallable, Category="GodFall|Store", meta=(DefaultToSelf="Menu"))
+    static bool InstallFreeStoreEntry(UUserWidget* Menu);
+
+    UFUNCTION(BlueprintCallable, Category="GodFall|Store")
+    static UUserWidget* OpenFreeStore(UUserWidget* Menu, UButton* SourceButton);
+
+    /** Approved base and admitted external item definitions; no startup grants. */
+    UFUNCTION(BlueprintPure, Category="GodFall|Store")
+    static TArray<UObject*> GetFreeStoreDefinitions();
+
+    /** Once-rolled permanent item through the existing zero-price purchase/save authority. */
+    UFUNCTION(BlueprintCallable, Category="GodFall|Store", meta=(WorldContext="WorldContextObject"))
+    static bool ClaimFreeStoreItem(UObject* WorldContextObject, UObject* Definition, FName& InstanceId, FString& Error);
+
     /** Editor-only fixture admission; refuses PIE and always refuses a packaged game. */
     UFUNCTION(BlueprintCallable, Category="GodFall|Packs|Testing", meta=(DevelopmentOnly))
     static bool ReloadEditorFixture(const FString& OwnershipRecord, const FString& PrivateSaveSlot, FString& Error);

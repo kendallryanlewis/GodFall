@@ -1,6 +1,8 @@
 # GodFall startup content sync
 
-This first version is a **Windows launcher**, not an in-game downloader. It synchronizes classic cooked `.pak` files before starting a packaged GodFall build. Launch through this script whenever you want an update check; starting the executable directly skips the check.
+`Play-GodFall.cmd` is the Windows entry point. Keep it beside `Start-GodFallRelease.ps1` and `Start-GodFall.ps1`. The first launch downloads the complete game from its published GitHub release; later launches check for a new complete version and additional item packs before starting. Game content is installed under `%LOCALAPPDATA%\GodFallGitHub\versions`; player data is separate under `PlayerData`. See the [full-content contract](../GameContent/README.md).
+
+`Start-GodFall.ps1` remains the additional-pack synchronizer for an already packaged game. Starting the game's executable directly skips update checks.
 
 The folders and downloader are published. Private editor fixtures passed new-character selection/restoration, clothing loot/equipment, permanent weapon acquisition, existing transaction/capacity rules and equipped-weapon save restoration. A rebuilt Windows Development game passed actual cooked-pack synchronization and fresh-process registration/removal: each external content category changed 0 → 1 → 0, with no registry issues and isolated test saves.
 
@@ -17,7 +19,7 @@ The runtime catalog declares character profiles, clothing/weapon definitions and
 
 Keep this launcher outside its managed cache. The example paths below are placeholders; use your actual packaged build, **not the live Unreal project**.
 
-For the standard Windows build layout, copy both `Play-GodFall.cmd` and `Start-GodFall.ps1` beside the top-level `GodFall_Clean.exe`, then open `Play-GodFall.cmd`. It uses the adjacent `GodFall_Clean` game folder and checks GitHub before launching. Use the PowerShell command below for a custom install path.
+For a clean installation, use the three-file launcher described above. No game executable or assets need to be supplied beside it. To manage only extra packs for a separately installed packaged build, use the PowerShell command below with that build's paths.
 
 ```powershell
 powershell.exe -NoProfile -File .\Start-GodFall.ps1 `
@@ -42,3 +44,5 @@ Packs use deterministic `_P.pak` names so they participate in Unreal's patch ord
 ## Verification status
 
 The live GodFall_Clean project and rebuilt classic-Pak Windows Development game contain the matching registry, selection, clothing-query and acquisition routes. Later compatible content updates use the launcher. Verification used UE 5.8.2-56702186+++UE5+Release-5.8, Win64: 25 launcher regression checks and a 54-check real archive/add/remove test passed. Editor PIE exercised gameplay separately; the packaged check exercised fresh startup registration/removal. Test fixtures are not release content. A Shipping build and physical gamepad were not exercised. Source assets and production saves are preserved.
+
+The full-content installer passed13 separate filesystem/HTTP regressions for clean install, unchanged reuse, active-version additions/removals, save preservation, invalid paths, corrupt downloads/cache and failure recovery. Both base content and optional packs must be ready before the active version pointer changes. Full-release public download/launch verification is pending rollout. In-game free claims are available through the Vertical Slice pause menu; ordinary paid offers retain their authored prices.

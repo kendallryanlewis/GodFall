@@ -1,11 +1,11 @@
 @echo off
 setlocal
-if not exist "%~dp0GodFall_Clean\Content\Paks" (
-  echo Copy Play-GodFall.cmd and Start-GodFall.ps1 beside the packaged GodFall_Clean.exe.
+if not exist "%~dp0Start-GodFallRelease.ps1" (
+  echo Keep Play-GodFall.cmd, Start-GodFallRelease.ps1 and Start-GodFall.ps1 together.
   pause
   exit /b 1
 )
-powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File "%~dp0Start-GodFall.ps1" -GameRoot "%~dp0GodFall_Clean"
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File "%~dp0Start-GodFallRelease.ps1" -InstallRoot "%LOCALAPPDATA%\GodFallGitHub"
 if errorlevel 1 (
   pause
   exit /b 1

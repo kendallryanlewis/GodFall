@@ -33,6 +33,12 @@ These gameplay checks use disposable catalog fixtures and existing art. Separate
 
 The registry reads the launcher's owned `.godfall-github.json` after startup pack discovery. Invalid or conflicting catalogs are rejected as a unit. A fresh process builds its registry only from the installed set. Missing imported character IDs fail the continuation availability gate. Save files are retained; full equipped-item removal behavior still requires verification.
 
+## Free store
+
+The Vertical Slice pause menu has an additive **FREE STORE** entry. Its runtime catalog lists the approved base weapon definitions and armor catalog plus admitted external definitions. Claims use the existing permanent-item factories and saved purchase transaction with a zero listing price. They preserve Gold/Dust, capacity, identity, rolls, equipment and save behavior. Existing paid shops and recipes retain their authored values. The purchase helper permits zero and still rejects negative prices. Character selection remains available separately at no cost.
+
+The existing apply-weapon chain refreshes the existing Player grip function when an instance is applied, so newly equipped purchased weapons attach immediately. No grip transforms, stat formulas or animations are changed by this integration.
+
 ## Packaging
 
 Build cooked classic Paks against the exact base GodFall release, engine build and Win64 target, with IoStore disabled. Include the catalog and all its soft-referenced external assets in the cook. Do not bundle copies of base content. Keep packs at most95MiB for the current GitHub publisher. Upload the `.pak` and its descriptor together to `GameItems/Models`, `Clothing` or `Weapons`, then wait for the publishing workflow.
