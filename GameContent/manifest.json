@@ -3,37 +3,37 @@
   "project": "GodFall_Clean",
   "platform": "Win64",
   "engine": "5.8",
-  "release_tag": "godfall-content-20261024-free-store",
-  "source_commit": "58e8b3fa41042a53cef935860c2842cdc9ec0f92",
+  "release_tag": "godfall-content-20261024-shopkeeper",
+  "source_commit": "269f2a9284c9c5b7da2233451f97f60d93255ebf",
   "executable": "GodFall_Clean.exe",
   "archive": {
-    "size": 3374746716,
-    "sha256": "3ab345f603014a71c214cf742ef37c6bc6a14bb12650f96123fd657f3bcb1952",
+    "size": 3374759004,
+    "sha256": "0eaefcdd4d735a47b00ac13deb5da07d39fba72ae3e7cd832a053c3e469fd8ee",
     "parts": [
       {
         "name": "GodFall-Windows.zip.part001",
         "size": 805306368,
-        "sha256": "4993f26cbe324749d1a22c54897167ebb9ee6d7fc1b840e360da4479cfcd5fac"
+        "sha256": "e72445d714822ff9862d16d1ceff23b464c18b94426ee8919ea7735a59cc7edd"
       },
       {
         "name": "GodFall-Windows.zip.part002",
         "size": 805306368,
-        "sha256": "558bae5079c493cdf654fc6b7d10c0ea0a9ae5587923d51198682c85c6f3e3f7"
+        "sha256": "7af439c6158ab005445a9cb84d63c038dd6e1e25a8b01fedcfc302728ee1eaa1"
       },
       {
         "name": "GodFall-Windows.zip.part003",
         "size": 805306368,
-        "sha256": "e6c89a37437283c3e92d953e7e02c0a50fd1c050fb9984d6b8ae88b2363a208b"
+        "sha256": "8a08aa4d0d345b660bf927a285d9f234facf3b50f2b50f2ad3b5ca44434d31d5"
       },
       {
         "name": "GodFall-Windows.zip.part004",
         "size": 805306368,
-        "sha256": "962a7e456490cdf595b71906fca1a888a0c41a4f7fff445226f6021ea1053ce3"
+        "sha256": "a0fb18a3e4eba44d1ad10857fb94a644b36d20449f7c28df7ab53c52ac34c153"
       },
       {
         "name": "GodFall-Windows.zip.part005",
-        "size": 153521244,
-        "sha256": "53e535080f921377023aa874e92200fe072bc089b21ed0d8447f36d8580f0c75"
+        "size": 153533532,
+        "sha256": "5197c8645f7d5eff77a42e92991bf7c7a53c0fbc8db3feef15ad06dfee6009f5"
       }
     ]
   },
@@ -270,8 +270,8 @@
     },
     {
       "path": "GodFall_Clean/Binaries/Win64/GodFall_Clean.exe",
-      "size": 338280448,
-      "sha256": "bbdfbdd51e244425d3668ca0747afcf7d9d7d2d3bece946c0c2431425261e7e3"
+      "size": 338296832,
+      "sha256": "4e5780a06d8a7f1fa128f2aa17b8a626fddcc4236eb930df7477af5d667ebc3b"
     },
     {
       "path": "GodFall_Clean/Binaries/Win64/tbb12.dll",
@@ -285,8 +285,8 @@
     },
     {
       "path": "GodFall_Clean/Content/Paks/GodFall_Clean-Windows.pak",
-      "size": 2928034028,
-      "sha256": "8b758cab33a6ae4b53fedba7e2a9af1b9b7acd36c713f5ff4bbe401f5c2a8eee"
+      "size": 2928029932,
+      "sha256": "aba4c5cfa100464faafd926138a27dcf060aff8f0925220f4d071d09a7067424"
     },
     {
       "path": "GodFall_Clean.exe",
