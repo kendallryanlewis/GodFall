@@ -35,7 +35,9 @@ The registry reads the launcher's owned `.godfall-github.json` after startup pac
 
 ## Free store
 
-The Vertical Slice pause menu has an additive **FREE STORE** entry. Its runtime catalog lists the approved base weapon definitions and armor catalog plus admitted external definitions. Claims use the existing permanent-item factories and saved purchase transaction with a zero listing price. They preserve Gold/Dust, capacity, identity, rolls, equipment and save behavior. Existing paid shops and recipes retain their authored values. The purchase helper permits zero and still rejects negative prices. Character selection remains available separately at no cost.
+The Vertical Slice has one placed `GodFallShopkeeper` near the practice-area spawn. Its local Enhanced Input action uses E or gamepad west (X / Square) and only opens the free store within 240 units while gameplay is active. A visible Quartermaster prompt identifies the NPC. The store pauses gameplay, prevents duplicate opening, and returns directly to gameplay on Back or Escape. The pause-menu installer hook has been removed.
+
+The runtime catalog lists the approved base weapon definitions and armor catalog plus admitted external definitions. Claims use the existing permanent-item factories and saved purchase transaction with a zero listing price. They preserve Gold/Dust, capacity, identity, rolls, equipment and save behavior. Existing paid shops and recipes retain their authored values. The purchase helper permits zero and still rejects negative prices. Character selection remains available separately at no cost.
 
 The existing apply-weapon chain refreshes the existing Player grip function when an instance is applied, so newly equipped purchased weapons attach immediately. No grip transforms, stat formulas or animations are changed by this integration.
 

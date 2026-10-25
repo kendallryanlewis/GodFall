@@ -37,10 +37,13 @@ class GODFALLPACKRUNTIME_API UGodFallFreeStore : public UUserWidget
     GENERATED_BODY()
 public:
     void Configure(UUserWidget* InMenu,UButton* InSource);
+    void ConfigureWorldInteraction();
     void ClaimDefinition(UObject* Definition);
+    UFUNCTION(BlueprintCallable, Category="GodFall|Store") void CloseStore();
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry,const FKeyEvent& Event) override;
 private:
     UPROPERTY(Transient) TObjectPtr<UUserWidget> Menu;
@@ -49,5 +52,6 @@ private:
     UPROPERTY(Transient) TObjectPtr<UButton> Close;
     UPROPERTY(Transient) TObjectPtr<UButton> FirstChoice;
     ESlateVisibility PreviousVisibility=ESlateVisibility::Visible;
-    UFUNCTION() void CloseStore();
+    bool bWorldInteraction=false;
+    void RestoreWorldInput();
 };

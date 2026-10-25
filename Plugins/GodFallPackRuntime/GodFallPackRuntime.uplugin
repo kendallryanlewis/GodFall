@@ -8,5 +8,6 @@
   "CanContainContent": false,
   "EnabledByDefault": false,
   "SupportedTargetPlatforms": ["Win64"],
-  "Modules": [{"Name": "GodFallPackRuntime", "Type": "Runtime", "LoadingPhase": "Default"}]
+  "Modules": [{"Name": "GodFallPackRuntime", "Type": "Runtime", "LoadingPhase": "Default"}],
+  "Plugins": [{"Name": "EnhancedInput", "Enabled": true}]
 }

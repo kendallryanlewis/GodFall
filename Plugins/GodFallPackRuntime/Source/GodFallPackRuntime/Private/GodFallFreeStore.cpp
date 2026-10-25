@@ -1,6 +1,7 @@
 #include "GodFallFreeStore.h"
 #include "GodFallPackLibrary.h"
 #include "Blueprint/WidgetTree.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Border.h"
 #include "Components/ActorComponent.h"
 #include "Components/CanvasPanel.h"
@@ -185,6 +186,7 @@ void UGodFallFreeStoreEntry::OpenStore(){UGodFallPackLibrary::OpenFreeStore(Menu
 void UGodFallFreeStoreChoice::Configure(UObject* InDefinition,UGodFallFreeStore* InStore){Definition=InDefinition;Store=InStore;OnClicked.AddUniqueDynamic(this,&ThisClass::Claim);}
 void UGodFallFreeStoreChoice::Claim(){if(Store&&Definition)Store->ClaimDefinition(Definition);}
 void UGodFallFreeStore::Configure(UUserWidget* InMenu,UButton* InSource){Menu=InMenu;Source=InSource;PreviousVisibility=Menu->GetVisibility();SetIsFocusable(true);}
+void UGodFallFreeStore::ConfigureWorldInteraction(){bWorldInteraction=true;SetIsFocusable(true);}
 TSharedRef<SWidget> UGodFallFreeStore::RebuildWidget()
 {
     if(!WidgetTree)WidgetTree=NewObject<UWidgetTree>(this,TEXT("FreeStoreTree"));
@@ -219,10 +221,23 @@ void UGodFallFreeStore::ClaimDefinition(UObject* Definition)
 }
 void UGodFallFreeStore::CloseStore()
 {
+    if(bWorldInteraction){RestoreWorldInput();RemoveFromParent();return;}
     RemoveFromParent();if(Menu)Menu->SetVisibility(PreviousVisibility);
     if(auto* PC=GetOwningPlayer()){FInputModeGameAndUI Mode;if(Source)Mode.SetWidgetToFocus(Source->TakeWidget());PC->SetInputMode(Mode);PC->bShowMouseCursor=true;}
     if(Source)Source->SetKeyboardFocus();
 }
+void UGodFallFreeStore::RestoreWorldInput()
+{
+    if(!bWorldInteraction)return;
+    bWorldInteraction=false;
+    if(auto* PC=GetOwningPlayer())
+    {
+        PC->SetPause(false);PC->FlushPressedKeys();
+        PC->SetInputMode(FInputModeGameOnly());PC->bShowMouseCursor=false;
+        UWidgetBlueprintLibrary::SetFocusToGameViewport();
+    }
+}
+void UGodFallFreeStore::NativeDestruct(){RestoreWorldInput();Super::NativeDestruct();}
 FReply UGodFallFreeStore::NativeOnKeyDown(const FGeometry& Geometry,const FKeyEvent& Event)
 {
     if(Event.GetKey()==EKeys::Escape||Event.GetKey()==EKeys::Gamepad_FaceButton_Right){CloseStore();return FReply::Handled();}
