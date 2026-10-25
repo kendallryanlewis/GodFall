@@ -2,7 +2,7 @@
 
 This first version is a **Windows launcher**, not an in-game downloader. It synchronizes classic cooked `.pak` files before starting a packaged GodFall build. Launch through this script whenever you want an update check; starting the executable directly skips the check.
 
-The folders and downloader are published. Private editor fixtures passed new-character selection/restoration, clothing loot/equipment, permanent weapon acquisition, existing transaction/capacity rules and equipped-weapon save restoration. **Actual cooked-pack add/remove verification in the rebuilt Windows game is in progress.** A successful download alone does not establish playable registration.
+The folders and downloader are published. Private editor fixtures passed new-character selection/restoration, clothing loot/equipment, permanent weapon acquisition, existing transaction/capacity rules and equipped-weapon save restoration. A rebuilt Windows Development game passed actual cooked-pack synchronization and fresh-process registration/removal: each external content category changed 0 → 1 → 0, with no registry issues and isolated test saves.
 
 ## Publishing packs
 
@@ -41,4 +41,4 @@ Packs use deterministic `_P.pak` names so they participate in Unreal's patch ord
 
 ## Verification status
 
-The live GodFall_Clean project contains the matching registry, selection, clothing-query and acquisition routes. The base game needs a rebuild once; later compatible content updates use the launcher. Editor fixture checks are recorded separately from real cooked-pack mounting. A rebuilt classic-Pak Windows game and its actual add/remove check are in progress. Existing saved-item recovery remains authoritative, and source assets and production saves are preserved.
+The live GodFall_Clean project and rebuilt classic-Pak Windows Development game contain the matching registry, selection, clothing-query and acquisition routes. Later compatible content updates use the launcher. Verification used UE 5.8.2-56702186+++UE5+Release-5.8, Win64: 25 launcher regression checks and a 54-check real archive/add/remove test passed. Editor PIE exercised gameplay separately; the packaged check exercised fresh startup registration/removal. Test fixtures are not release content. A Shipping build and physical gamepad were not exercised. Source assets and production saves are preserved.
